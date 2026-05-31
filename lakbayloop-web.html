@@ -1,0 +1,1516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LakbayLoop — Web Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;500;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.12.7/Recharts.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#050608;--bg2:#0A0D12;--card:#111419;--card2:#181C23;
+  --glass:rgba(255,255,255,0.055);--gb:rgba(255,255,255,0.09);
+  --w:#FFFFFF;--w60:rgba(255,255,255,0.6);--w30:rgba(255,255,255,0.3);
+  --w10:rgba(255,255,255,0.1);--w06:rgba(255,255,255,0.06);
+  --blue:#5B8EF0;--blue-dim:rgba(91,142,240,0.12);--blue-border:rgba(91,142,240,0.25);
+  --teal:#3EC9A7;--teal-dim:rgba(62,201,167,0.1);--teal-border:rgba(62,201,167,0.2);
+  --amber:#E8A84C;--amber-dim:rgba(232,168,76,0.1);--amber-border:rgba(232,168,76,0.2);
+  --red:#E05C5C;--red-dim:rgba(224,92,92,0.1);--red-border:rgba(224,92,92,0.2);
+  --fh:'Cabinet Grotesk',sans-serif;--fb:'Plus Jakarta Sans',sans-serif;
+  --sidebar:272px;
+}
+html,body{height:100%;background:var(--bg2);font-family:var(--fb);color:var(--w);overflow:hidden}
+body{
+  background:
+    radial-gradient(circle at 15% 10%,rgba(91,142,240,0.09) 0%,transparent 35%),
+    radial-gradient(circle at 85% 90%,rgba(62,201,167,0.05) 0%,transparent 30%),
+    linear-gradient(180deg,#0A0D12 0%,#050608 100%);
+}
+
+/* ── LAYOUT ── */
+.shell{display:flex;height:100vh;overflow:hidden}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:var(--sidebar);min-width:var(--sidebar);height:100vh;
+  background:rgba(11,14,20,0.92);
+  border-right:1px solid rgba(255,255,255,0.06);
+  display:flex;flex-direction:column;
+  padding:0;position:relative;z-index:10;flex-shrink:0;
+  backdrop-filter:blur(24px);
+}
+.sb-head{padding:24px 20px 20px;border-bottom:1px solid rgba(255,255,255,0.05)}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:32px;height:32px;background:var(--blue);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-icon svg{width:16px;height:16px;stroke:white;fill:none;stroke-width:2.5}
+.logo-name{font-family:var(--fh);font-size:17px;font-weight:800;color:var(--w);letter-spacing:-.3px}
+
+.sb-nav{flex:1;padding:16px 12px;display:flex;flex-direction:column;gap:3px;overflow-y:auto}
+.nav-section-label{font-size:10px;color:rgba(255,255,255,0.25);font-weight:700;letter-spacing:.8px;text-transform:uppercase;padding:12px 8px 6px;font-family:var(--fb)}
+.ni{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:14px;cursor:pointer;border:none;background:transparent;width:100%;text-align:left;transition:all .15s;text-decoration:none}
+.ni:hover{background:rgba(255,255,255,0.04)}
+.ni.active{background:rgba(91,142,240,0.1);border:1px solid rgba(91,142,240,0.12)}
+.ni svg{width:18px;height:18px;stroke:rgba(255,255,255,0.3);fill:none;stroke-width:1.8;flex-shrink:0;transition:stroke .15s}
+.ni span{font-family:var(--fb);font-size:13.5px;font-weight:500;color:rgba(255,255,255,0.35);transition:color .15s}
+.ni.active svg{stroke:var(--blue)}
+.ni.active span{color:var(--w);font-weight:600}
+
+.pipeline-chip{margin:8px 12px;padding:9px 12px;background:rgba(232,168,76,0.06);border:1px solid rgba(232,168,76,0.15);border-radius:12px;display:flex;align-items:center;gap:8px}
+.pipeline-dot{width:7px;height:7px;border-radius:50%;background:var(--amber);flex-shrink:0}
+.pipeline-chip-text{font-size:11.5px;color:rgba(255,255,255,0.45);font-family:var(--fb)}
+.pipeline-chip-text b{color:var(--amber);font-weight:600}
+
+.sb-foot{padding:14px 12px;border-top:1px solid rgba(255,255,255,0.05)}
+.user-card{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;cursor:pointer;transition:background .15s}
+.user-card:hover{background:rgba(255,255,255,0.04)}
+.av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--blue),#8BB4FF);display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-size:12px;font-weight:800;color:var(--bg);flex-shrink:0}
+.user-info{flex:1;min-width:0}
+.user-name{font-family:var(--fh);font-size:13px;font-weight:700;color:var(--w);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-sub{font-size:11px;color:rgba(255,255,255,0.3);margin-top:1px;font-family:var(--fb)}
+
+/* ── MAIN AREA ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+
+/* ── TOP HEADER ── */
+.topbar{
+  height:70px;min-height:70px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;border-bottom:1px solid rgba(255,255,255,0.05);
+  background:rgba(5,6,8,0.6);backdrop-filter:blur(12px);z-index:5;flex-shrink:0;
+}
+.topbar-left{display:flex;flex-direction:column;gap:1px}
+.page-title{font-family:var(--fh);font-size:19px;font-weight:800;color:var(--w);letter-spacing:-.2px}
+.page-sub{font-size:12px;color:rgba(255,255,255,0.35);font-family:var(--fb)}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.search-bar{display:flex;align-items:center;gap:8px;background:var(--card2);border:1px solid rgba(255,255,255,0.07);border-radius:100px;padding:8px 16px;min-width:220px;cursor:text}
+.search-bar svg{width:14px;height:14px;stroke:rgba(255,255,255,0.25);fill:none;stroke-width:2;flex-shrink:0}
+.search-bar span{font-size:13px;color:rgba(255,255,255,0.22);font-family:var(--fb);white-space:nowrap}
+.date-chip{padding:7px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:100px;font-size:12px;color:rgba(255,255,255,0.4);font-family:var(--fb);white-space:nowrap}
+.icon-btn{width:36px;height:36px;border-radius:11px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s}
+.icon-btn:hover{background:rgba(255,255,255,0.08)}
+.icon-btn svg{width:16px;height:16px;stroke:rgba(255,255,255,0.5);fill:none;stroke-width:1.8}
+
+/* ── CONTENT ── */
+.content{flex:1;overflow-y:auto;padding:24px 28px 32px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.08) transparent}
+.content::-webkit-scrollbar{width:5px}
+.content::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:3px}
+
+/* ── PAGES ── */
+.page{display:none}
+.page.active{display:block}
+
+/* ── CARDS ── */
+.glass-card{background:var(--glass);border:1px solid rgba(255,255,255,0.09);border-radius:20px}
+.dark-card{background:var(--card);border:1px solid rgba(255,255,255,0.055);border-radius:18px}
+.dark-card2{background:var(--card2);border:1px solid rgba(255,255,255,0.06);border-radius:16px}
+
+/* ── BADGES ── */
+.badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:100px;font-family:var(--fb);letter-spacing:.02em;white-space:nowrap}
+.badge-teal{background:var(--teal-dim);color:var(--teal);border:1px solid var(--teal-border)}
+.badge-amber{background:var(--amber-dim);color:var(--amber);border:1px solid var(--amber-border)}
+.badge-red{background:var(--red-dim);color:var(--red);border:1px solid var(--red-border)}
+.badge-blue{background:var(--blue-dim);color:var(--blue);border:1px solid var(--blue-border)}
+
+/* ── CHIPS ── */
+.chip{display:inline-flex;align-items:center;gap:5px;border-radius:100px;padding:5px 11px}
+.chip-teal{background:var(--teal-dim);border:1px solid var(--teal-border)}
+.chip-teal span,.chip-teal svg{color:var(--teal);stroke:var(--teal)}
+.chip-amber{background:var(--amber-dim);border:1px solid var(--amber-border)}
+.chip-amber span,.chip-amber svg{color:var(--amber);stroke:var(--amber)}
+.chip-blue{background:var(--blue-dim);border:1px solid var(--blue-border)}
+.chip-blue span,.chip-blue svg{color:var(--blue);stroke:var(--blue)}
+.chip svg{width:12px;height:12px;fill:none;stroke-width:2;flex-shrink:0}
+.chip span{font-size:11px;font-weight:600;font-family:var(--fb)}
+
+/* ── BUTTONS ── */
+.btn-p{padding:10px 20px;background:var(--w);color:#080A0F;border:none;border-radius:100px;font-family:var(--fh);font-size:13px;font-weight:700;cursor:pointer;transition:all .12s;letter-spacing:.01em;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.btn-p:hover{background:#e4e4e4}
+.btn-s{padding:9px 18px;background:rgba(255,255,255,0.06);color:var(--w);border:1px solid rgba(255,255,255,0.1);border-radius:100px;font-family:var(--fh);font-size:13px;font-weight:600;cursor:pointer;transition:all .12s;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.btn-s:hover{background:rgba(255,255,255,0.1)}
+.btn-teal{padding:9px 16px;background:var(--teal-dim);color:var(--teal);border:1px solid var(--teal-border);border-radius:100px;font-family:var(--fh);font-size:12px;font-weight:700;cursor:pointer;transition:all .12s;display:inline-flex;align-items:center;gap:6px}
+.btn-teal:hover{background:rgba(62,201,167,0.16)}
+
+/* ── PILL TABS ── */
+.tab-row{display:flex;background:rgba(255,255,255,0.04);border-radius:12px;padding:3px;gap:3px}
+.tab{flex:1;padding:7px 12px;border-radius:9px;border:none;background:transparent;color:rgba(255,255,255,0.35);font-family:var(--fb);font-size:13px;font-weight:500;cursor:pointer;transition:all .18s;white-space:nowrap}
+.tab.active{background:var(--card2);color:var(--w);font-weight:600}
+
+/* ── LABELS ── */
+.lbl{font-size:10.5px;color:rgba(255,255,255,0.3);font-weight:700;letter-spacing:.6px;text-transform:uppercase;font-family:var(--fb)}
+
+/* ── GRIDS ── */
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.grid-7-5{display:grid;grid-template-columns:7fr 5fr;gap:14px}
+.grid-5-7{display:grid;grid-template-columns:5fr 7fr;gap:14px}
+
+/* ── METRIC CARD ── */
+.metric-card{background:var(--card);border:1px solid rgba(255,255,255,0.055);border-radius:18px;padding:18px 20px;position:relative;overflow:hidden}
+.metric-card::after{content:'';position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,0.02),transparent 70%)}
+.metric-val{font-family:var(--fh);font-size:32px;font-weight:800;color:var(--w);line-height:1;margin-top:8px}
+.metric-trend{font-size:11.5px;margin-top:6px;font-family:var(--fb);font-weight:600}
+.metric-icon{width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-bottom:10px}
+.metric-icon svg{width:17px;height:17px;fill:none;stroke-width:2}
+
+/* ── ROUTE CARD ── */
+.route-card{background:var(--card);border:1px solid rgba(255,255,255,0.055);border-radius:18px;padding:16px 18px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all .15s}
+.route-card:hover{background:var(--card2);transform:translateY(-1px);box-shadow:0 8px 32px rgba(0,0,0,0.3)}
+.route-icon{width:42px;height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.route-icon svg{width:19px;height:19px;fill:none;stroke-width:1.8}
+
+/* ── LOG DOT ── */
+.ld{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px}
+
+/* ── PROGRESS BAR ── */
+.pbar-wrap{height:4px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden}
+.pbar-fill{height:100%;border-radius:2px}
+
+/* ── INPUT ── */
+.inp{width:100%;padding:11px 16px;background:var(--card2);border:1px solid rgba(255,255,255,0.08);border-radius:12px;color:var(--w);font-family:var(--fb);font-size:14px;outline:none;transition:border-color .2s}
+.inp::placeholder{color:rgba(255,255,255,0.22)}
+.inp:focus{border-color:rgba(91,142,240,0.4)}
+select.inp{-webkit-appearance:none;cursor:pointer}
+
+/* ── TOGGLE ── */
+.tg{position:relative;width:40px;height:22px;flex-shrink:0}
+.tg input{opacity:0;width:0;height:0}
+.tgs{position:absolute;inset:0;background:rgba(255,255,255,0.12);border-radius:100px;cursor:pointer;transition:.25s}
+.tgs::before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:rgba(255,255,255,0.5);border-radius:50%;transition:.25s}
+.tg input:checked+.tgs{background:var(--blue)}
+.tg input:checked+.tgs::before{transform:translateX(18px);background:var(--w)}
+
+/* ── CHART BARS (inline) ── */
+.bar-chart{display:flex;align-items:flex-end;gap:6px;height:80px}
+.bar-col{display:flex;flex-direction:column;align-items:center;gap:5px;flex:1}
+.bar-seg{width:100%;border-radius:5px 5px 0 0;background:rgba(91,142,240,0.18);transition:background .2s;min-height:4px}
+.bar-seg.hi{background:var(--blue)}
+.bar-lbl{font-size:9px;color:rgba(255,255,255,0.28);font-family:var(--fb)}
+
+/* ── STAR RATING ── */
+.stars{display:flex;gap:2px}
+.star{width:12px;height:12px;stroke:var(--amber)}
+.star.fill{fill:var(--amber)}
+.star.empty{fill:transparent}
+
+/* ── TABLE ── */
+.data-table{width:100%;border-collapse:collapse}
+.data-table th{font-size:10.5px;color:rgba(255,255,255,0.25);font-weight:700;letter-spacing:.6px;text-transform:uppercase;padding:10px 14px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.05);font-family:var(--fb)}
+.data-table td{padding:12px 14px;font-size:13px;color:rgba(255,255,255,0.7);border-bottom:1px solid rgba(255,255,255,0.04);font-family:var(--fb)}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tr:hover td{background:rgba(255,255,255,0.02)}
+.data-table td.td-main{font-family:var(--fh);font-size:13.5px;font-weight:700;color:var(--w)}
+
+/* ── MODAL ── */
+.modal-bg{position:fixed;inset:0;background:rgba(5,6,8,0.85);z-index:100;display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
+.modal-bg.open{display:flex}
+.modal{background:var(--card);border:1px solid rgba(255,255,255,0.08);border-radius:24px;padding:26px;width:min(520px,90vw);max-height:85vh;overflow-y:auto}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.modal-title{font-family:var(--fh);font-size:18px;font-weight:800;color:var(--w)}
+.modal-close{width:30px;height:30px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.09);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.modal-close svg{width:13px;height:13px;stroke:white;fill:none;stroke-width:2}
+
+/* ── PILL SELECTOR ── */
+.pill-row{display:flex;gap:6px;flex-wrap:wrap}
+.pill{padding:7px 14px;border-radius:100px;border:1px solid rgba(255,255,255,0.09);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.4);font-family:var(--fb);font-size:12.5px;font-weight:500;cursor:pointer;transition:all .18s}
+.pill.active{background:var(--blue-dim);border-color:var(--blue-border);color:var(--blue)}
+.pill:hover:not(.active){background:rgba(255,255,255,0.07)}
+
+/* ── DETAIL PANEL ── */
+.detail-panel{background:var(--card);border:1px solid rgba(255,255,255,0.055);border-radius:18px;padding:20px}
+
+/* ── PIPELINE ARCH ── */
+.pipe-step{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1}
+.pipe-step-icon{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center}
+.pipe-step-icon svg{width:20px;height:20px;fill:none;stroke-width:1.8}
+.pipe-arrow{color:rgba(255,255,255,0.2);font-size:18px;margin-top:10px;flex-shrink:0}
+
+/* ── SCROLLBAR ── */
+.sb-nav::-webkit-scrollbar{width:0}
+
+/* ── AUTH OVERLAY ── */
+.auth-overlay{
+  position:fixed;inset:0;z-index:200;
+  display:flex;align-items:stretch;
+  background:
+    radial-gradient(circle at 18% 12%,rgba(91,142,240,0.12) 0%,transparent 38%),
+    radial-gradient(circle at 80% 85%,rgba(62,201,167,0.07) 0%,transparent 32%),
+    linear-gradient(160deg,#0A0D12 0%,#050608 100%);
+  opacity:1;transition:opacity .35s ease;
+}
+.auth-overlay.hidden{opacity:0;pointer-events:none}
+.auth-left{
+  flex:1;display:flex;flex-direction:column;justify-content:space-between;
+  padding:44px 52px;position:relative;overflow:hidden;
+  border-right:1px solid rgba(255,255,255,0.05);
+}
+.auth-left::after{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 30% 60%,rgba(91,142,240,0.06) 0%,transparent 55%);
+  pointer-events:none;
+}
+.auth-right{
+  width:480px;min-width:480px;display:flex;align-items:center;justify-content:center;
+  padding:44px 52px;
+}
+.auth-panel{width:100%;max-width:360px}
+
+/* auth screens */
+.auth-screen{display:none}
+.auth-screen.active{display:block}
+
+/* step dots */
+.step-dots{display:flex;gap:6px;margin-bottom:24px}
+.step-dot{height:5px;border-radius:3px;background:rgba(255,255,255,0.15);transition:all .25s}
+.step-dot.active{width:22px;background:var(--blue)}
+.step-dot:not(.active){width:7px}
+
+/* divider */
+.auth-divider{display:flex;align-items:center;gap:12px;margin:20px 0}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,0.07)}
+.auth-divider span{font-size:12px;color:rgba(255,255,255,0.25);font-family:var(--fb)}
+
+/* social btn */
+.btn-social{width:100%;padding:11px 18px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:14px;color:rgba(255,255,255,0.6);font-family:var(--fb);font-size:13.5px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:background .15s}
+.btn-social:hover{background:rgba(255,255,255,0.07)}
+
+/* input label */
+.field-label{font-size:11px;color:rgba(255,255,255,0.35);font-weight:700;letter-spacing:.55px;text-transform:uppercase;font-family:var(--fb);margin-bottom:7px;display:block}
+
+/* password toggle wrapper */
+.pw-wrap{position:relative}
+.pw-wrap .inp{padding-right:44px}
+.pw-toggle{position:absolute;right:14px;top:50%;transform:translateY(-50%);cursor:pointer;color:rgba(255,255,255,0.3);background:none;border:none;display:flex;align-items:center;padding:0}
+.pw-toggle svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8}
+
+/* ── ANIMATIONS ── */
+@keyframes fade-up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.page.active>*{animation:fade-up .3s ease both}
+.page.active>*:nth-child(2){animation-delay:.04s}
+.page.active>*:nth-child(3){animation-delay:.08s}
+.page.active>*:nth-child(4){animation-delay:.12s}
+.page.active>*:nth-child(5){animation-delay:.16s}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1100px){
+  :root{--sidebar:220px}
+  .grid-4{grid-template-columns:repeat(2,1fr)}
+  .grid-7-5,.grid-5-7{grid-template-columns:1fr}
+}
+@media(max-width:840px){
+  .sidebar{display:none}
+  .grid-4,.grid-3{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+<!-- ═══════════════════ AUTH OVERLAY ═══════════════════ -->
+<div class="auth-overlay" id="auth-overlay">
+
+  <!-- Left: branding panel -->
+  <div class="auth-left">
+    <div>
+      <div class="logo" style="margin-bottom:0">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>
+        </div>
+        <span class="logo-name">LakbayLoop</span>
+      </div>
+    </div>
+
+    <!-- Route art -->
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;position:relative">
+      <svg viewBox="0 0 380 380" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:min(340px,100%);height:auto;opacity:.9">
+        <circle cx="190" cy="190" r="150" stroke="rgba(91,142,240,0.06)" stroke-width="1"/>
+        <circle cx="190" cy="190" r="105" stroke="rgba(91,142,240,0.07)" stroke-width="1"/>
+        <circle cx="190" cy="190" r="62" stroke="rgba(91,142,240,0.09)" stroke-width="1"/>
+        <path d="M88 308 C110 278 138 245 160 218 C182 191 182 170 190 145 C198 120 216 110 240 113" stroke="url(#alg1)" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M88 308 C115 293 142 282 190 268 C226 257 236 195 240 113" stroke="rgba(255,255,255,0.03)" stroke-width="2" stroke-dasharray="4 6"/>
+        <!-- waypoints -->
+        <circle cx="88" cy="308" r="9" fill="rgba(62,201,167,0.15)" stroke="#3EC9A7" stroke-width="1.5"/>
+        <circle cx="88" cy="308" r="4" fill="#3EC9A7"/>
+        <circle cx="240" cy="113" r="9" fill="rgba(91,142,240,0.15)" stroke="#5B8EF0" stroke-width="1.5"/>
+        <circle cx="240" cy="113" r="4" fill="#5B8EF0"/>
+        <circle cx="190" cy="190" r="6" fill="rgba(91,142,240,0.2)" stroke="#5B8EF0" stroke-width="1.5"/>
+        <circle cx="190" cy="190" r="3" fill="#5B8EF0"/>
+        <circle cx="145" cy="248" r="5" fill="rgba(232,168,76,0.2)" stroke="#E8A84C" stroke-width="1.5"/>
+        <circle cx="145" cy="248" r="2.5" fill="#E8A84C"/>
+        <!-- glow -->
+        <ellipse cx="190" cy="190" rx="70" ry="70" fill="url(#agl1)"/>
+        <defs>
+          <linearGradient id="alg1" x1="88" y1="308" x2="240" y2="113" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#3EC9A7"/><stop offset="1" stop-color="#5B8EF0"/>
+          </linearGradient>
+          <radialGradient id="agl1" cx="0.5" cy="0.5" r="0.5">
+            <stop stop-color="#5B8EF0" stop-opacity=".06"/>
+            <stop offset="1" stop-color="#5B8EF0" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+      </svg>
+    </div>
+
+    <div>
+      <div style="font-size:11px;color:var(--blue);font-weight:700;letter-spacing:.8px;text-transform:uppercase;font-family:var(--fb);margin-bottom:10px">Daily Commute Intelligence</div>
+      <div style="font-family:var(--fh);font-size:38px;font-weight:900;color:var(--w);line-height:1.08;letter-spacing:-.6px;margin-bottom:14px">Your commute,<br>ready before<br>you leave.</div>
+      <p style="font-size:14px;color:rgba(255,255,255,0.45);line-height:1.7;font-family:var(--fb);max-width:340px">Save routes, check conditions, log your ride, and understand your patterns over time.</p>
+
+      <!-- social proof chips -->
+      <div style="display:flex;gap:10px;margin-top:24px;flex-wrap:wrap">
+        <div class="chip chip-teal"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg><span>Route intelligence</span></div>
+        <div class="chip chip-blue"><svg viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg><span>Commute analytics</span></div>
+        <div class="chip chip-amber"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg><span>Live data pipeline</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: auth forms -->
+  <div class="auth-right">
+    <div class="auth-panel">
+
+      <!-- ── LANDING ── -->
+      <div class="auth-screen active" id="auth-land">
+        <div style="margin-bottom:32px">
+          <div style="font-family:var(--fh);font-size:28px;font-weight:900;color:var(--w);letter-spacing:-.4px;line-height:1.1;margin-bottom:8px">Get started</div>
+          <p style="font-size:14px;color:rgba(255,255,255,0.4);font-family:var(--fb)">Create a free account or log in below.</p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:11px">
+          <button class="btn-p" style="width:100%;justify-content:center;padding:14px;font-size:14px" onclick="showAuth('signup')">Create account</button>
+          <button class="btn-s" style="width:100%;justify-content:center;padding:13px;font-size:14px" onclick="showAuth('login')">Log in</button>
+        </div>
+        <div class="auth-divider"><span>or continue with</span></div>
+        <button class="btn-social">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+          Continue with Google
+        </button>
+        <p style="text-align:center;font-size:13px;color:rgba(255,255,255,0.25);margin-top:24px;font-family:var(--fb)">By continuing you agree to our <span style="color:var(--blue);cursor:pointer">Terms</span> and <span style="color:var(--blue);cursor:pointer">Privacy Policy</span>.</p>
+      </div>
+
+      <!-- ── LOGIN ── -->
+      <div class="auth-screen" id="auth-login">
+        <button onclick="showAuth('land')" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;margin-bottom:24px">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        </button>
+        <div style="margin-bottom:28px">
+          <div style="font-family:var(--fh);font-size:28px;font-weight:900;color:var(--w);letter-spacing:-.4px;line-height:1.1;margin-bottom:6px">Welcome back</div>
+          <p style="font-size:14px;color:rgba(255,255,255,0.4);font-family:var(--fb)">Sign in to your LakbayLoop.</p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:10px">
+          <div>
+            <label class="field-label">Email</label>
+            <input class="inp" type="email" placeholder="you@email.com" id="login-email">
+          </div>
+          <div>
+            <label class="field-label">Password</label>
+            <div class="pw-wrap">
+              <input class="inp" type="password" placeholder="••••••••" id="login-pw">
+              <button class="pw-toggle" onclick="togglePw('login-pw',this)" type="button">
+                <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div style="text-align:right;margin-bottom:22px">
+          <span style="font-size:13px;color:var(--blue);cursor:pointer;font-weight:500;font-family:var(--fb)">Forgot password?</span>
+        </div>
+        <button class="btn-p" style="width:100%;justify-content:center;padding:14px;font-size:14px" onclick="enterDashboard()">Log in</button>
+        <div class="auth-divider"><span>or</span></div>
+        <button class="btn-social">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+          Continue with Google
+        </button>
+        <p style="text-align:center;font-size:13px;color:rgba(255,255,255,0.35);margin-top:22px;font-family:var(--fb)">No account? <span style="color:var(--blue);cursor:pointer;font-weight:600" onclick="showAuth('signup')">Sign up</span></p>
+      </div>
+
+      <!-- ── SIGN UP ── -->
+      <div class="auth-screen" id="auth-signup">
+        <button onclick="showAuth('land')" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;margin-bottom:20px">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        </button>
+
+        <!-- step dots -->
+        <div class="step-dots" id="su-dots">
+          <div class="step-dot active"></div>
+          <div class="step-dot"></div>
+          <div class="step-dot"></div>
+        </div>
+
+        <!-- Step 1 -->
+        <div id="su-step1">
+          <div style="margin-bottom:24px">
+            <div style="font-family:var(--fh);font-size:26px;font-weight:900;color:var(--w);letter-spacing:-.4px;line-height:1.1;margin-bottom:6px">What should<br>we call you?</div>
+            <p style="font-size:14px;color:rgba(255,255,255,0.4);font-family:var(--fb)">Create your LakbayLoop account.</p>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:13px;margin-bottom:22px">
+            <div>
+              <label class="field-label">Full name</label>
+              <input class="inp" type="text" placeholder="Josie Dela Cruz">
+            </div>
+            <div>
+              <label class="field-label">Email address</label>
+              <input class="inp" type="email" placeholder="you@email.com">
+            </div>
+          </div>
+          <button class="btn-p" style="width:100%;justify-content:center;padding:14px;font-size:14px" onclick="suStep(2)">
+            Continue
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+          <p style="text-align:center;font-size:13px;color:rgba(255,255,255,0.35);margin-top:18px;font-family:var(--fb)">Already have an account? <span style="color:var(--blue);cursor:pointer;font-weight:600" onclick="showAuth('login')">Log in</span></p>
+        </div>
+
+        <!-- Step 2 -->
+        <div id="su-step2" style="display:none">
+          <div style="margin-bottom:24px">
+            <div style="font-family:var(--fh);font-size:26px;font-weight:900;color:var(--w);letter-spacing:-.4px;line-height:1.1;margin-bottom:6px">Secure your<br>account</div>
+            <p style="font-size:14px;color:rgba(255,255,255,0.4);font-family:var(--fb)">Choose a strong password.</p>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:13px;margin-bottom:22px">
+            <div>
+              <label class="field-label">Create password</label>
+              <div class="pw-wrap">
+                <input class="inp" type="password" placeholder="Min. 8 characters" id="su-pw1">
+                <button class="pw-toggle" onclick="togglePw('su-pw1',this)" type="button">
+                  <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </div>
+            </div>
+            <div>
+              <label class="field-label">Confirm password</label>
+              <div class="pw-wrap">
+                <input class="inp" type="password" placeholder="Repeat password" id="su-pw2">
+                <button class="pw-toggle" onclick="togglePw('su-pw2',this)" type="button">
+                  <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+          <button class="btn-p" style="width:100%;justify-content:center;padding:14px;font-size:14px" onclick="suStep(3)">
+            Continue
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+
+        <!-- Step 3 -->
+        <div id="su-step3" style="display:none">
+          <div style="margin-bottom:24px">
+            <div style="font-family:var(--fh);font-size:26px;font-weight:900;color:var(--w);letter-spacing:-.4px;line-height:1.1;margin-bottom:6px">Where do you<br>commute from?</div>
+            <p style="font-size:14px;color:rgba(255,255,255,0.4);font-family:var(--fb)">Optional — helps us personalise your feed.</p>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:13px;margin-bottom:20px">
+            <div>
+              <label class="field-label">School or workplace</label>
+              <input class="inp" placeholder="e.g. UP Manila, BGC Office">
+            </div>
+            <div>
+              <label class="field-label">Preferred mode</label>
+              <div class="pill-row" style="margin-top:4px">
+                <div class="pill active" onclick="selPill(this)">Jeep / Bus</div>
+                <div class="pill" onclick="selPill(this)">Walking</div>
+                <div class="pill" onclick="selPill(this)">Bike</div>
+                <div class="pill" onclick="selPill(this)">Train</div>
+                <div class="pill" onclick="selPill(this)">Car</div>
+              </div>
+            </div>
+          </div>
+          <button class="btn-p" style="width:100%;justify-content:center;padding:14px;font-size:14px" onclick="enterDashboard()">
+            Get started
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<!-- /auth-overlay -->
+
+<div class="shell">
+
+<!-- ═══════════════════ SIDEBAR ═══════════════════ -->
+<aside class="sidebar">
+  <div class="sb-head">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>
+      </div>
+      <span class="logo-name">LakbayLoop</span>
+    </div>
+  </div>
+
+  <nav class="sb-nav">
+    <div class="nav-section-label">Main</div>
+    <button class="ni active" onclick="goTo('dashboard',this)">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+      <span>Dashboard</span>
+    </button>
+    <button class="ni" onclick="goTo('routes',this)">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M16.24 7.76a6 6 0 010 8.49m-8.48-.01a6 6 0 010-8.49"/></svg>
+      <span>Routes</span>
+    </button>
+    <button class="ni" onclick="openLogModal()">
+      <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12l7-7 7 7"/></svg>
+      <span>Log Ride</span>
+    </button>
+    <div class="nav-section-label">Analytics</div>
+    <button class="ni" onclick="goTo('insights',this)">
+      <svg viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+      <span>Insights</span>
+    </button>
+    <button class="ni" onclick="goTo('pipeline',this)">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span>Pipeline</span>
+    </button>
+    <div class="nav-section-label">Account</div>
+    <button class="ni" onclick="">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      <span>Settings</span>
+    </button>
+
+    <div class="pipeline-chip">
+      <div class="pipeline-dot"></div>
+      <span class="pipeline-chip-text">Pipeline: <b>1 failed</b> · 6:05 AM</span>
+    </div>
+  </nav>
+
+  <div class="sb-foot">
+    <div class="user-card">
+      <div class="av">JD</div>
+      <div class="user-info">
+        <div class="user-name">Josie Dela Cruz</div>
+        <div class="user-sub">UP Manila</div>
+      </div>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2" style="flex-shrink:0"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══════════════════ MAIN ═══════════════════ -->
+<div class="main">
+
+  <!-- TOP BAR (dynamic) -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="page-title" id="top-title">Good morning, Josie</div>
+      <div class="page-sub" id="top-sub">Your commute dashboard is ready for today.</div>
+    </div>
+    <div class="topbar-right">
+      <div class="search-bar">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
+        <span>Search routes, logs, or pipeline runs…</span>
+      </div>
+      <div class="date-chip">Sun, Jun 1, 2025</div>
+      <div class="icon-btn">
+        <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+      </div>
+      <div class="av" style="width:34px;height:34px;cursor:pointer">JD</div>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <div class="content" id="content">
+
+    <!-- ═══════════ DASHBOARD ═══════════ -->
+    <div class="page active" id="page-dashboard">
+
+      <!-- KPI Row -->
+      <div class="grid-4" style="margin-bottom:16px">
+        <div class="metric-card">
+          <div class="metric-icon" style="background:var(--blue-dim)">
+            <svg viewBox="0 0 24 24" style="stroke:var(--blue)"><circle cx="12" cy="12" r="4"/><path d="M16.24 7.76a6 6 0 010 8.49m-8.48-.01a6 6 0 010-8.49"/></svg>
+          </div>
+          <div class="lbl">Saved Routes</div>
+          <div class="metric-val">3</div>
+          <div class="metric-trend" style="color:var(--blue)">+1 this week</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon" style="background:var(--teal-dim)">
+            <svg viewBox="0 0 24 24" style="stroke:var(--teal)"><path d="M12 5v14M5 12l7-7 7 7"/></svg>
+          </div>
+          <div class="lbl">Logs This Month</div>
+          <div class="metric-val">14</div>
+          <div class="metric-trend" style="color:var(--teal)">↑ vs 9 last month</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon" style="background:var(--amber-dim)">
+            <svg viewBox="0 0 24 24" style="stroke:var(--amber)"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+          </div>
+          <div class="lbl">Avg Commute</div>
+          <div class="metric-val">31<span style="font-size:16px;font-weight:400;color:rgba(255,255,255,0.3)">m</span></div>
+          <div class="metric-trend" style="color:var(--amber)">↓ 3 min vs last month</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon" style="background:rgba(224,92,92,0.1)">
+            <svg viewBox="0 0 24 24" style="stroke:var(--red)"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div class="lbl">Pipeline Status</div>
+          <div class="metric-val" style="font-size:22px;color:var(--amber)">Partial</div>
+          <div class="metric-trend" style="color:var(--red)">1 source failed</div>
+        </div>
+      </div>
+
+      <!-- Row 2: Commute Context + Favorite Routes -->
+      <div class="grid-7-5" style="margin-bottom:16px">
+
+        <!-- Today's Commute Context -->
+        <div class="glass-card" style="padding:24px;position:relative;overflow:hidden">
+          <div style="position:absolute;top:-50px;right:-50px;width:220px;height:220px;background:radial-gradient(circle,rgba(91,142,240,0.07),transparent 70%);pointer-events:none"></div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px">
+            <div>
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                <span style="font-size:11px;color:var(--blue);font-weight:700;letter-spacing:.6px;text-transform:uppercase;font-family:var(--fb)">Today's Route</span>
+              </div>
+              <div style="font-family:var(--fh);font-size:22px;font-weight:800;color:var(--w);letter-spacing:-.3px">Home → UP Manila</div>
+              <div style="font-size:12.5px;color:rgba(255,255,255,0.35);margin-top:4px;font-family:var(--fb)">Via Commonwealth Ave · 3.2 km</div>
+            </div>
+            <div class="badge badge-blue" style="font-size:13px;padding:6px 14px;flex-shrink:0">28 min est.</div>
+          </div>
+
+          <!-- Route line graphic -->
+          <div style="margin:0 0 18px;padding:16px;background:rgba(255,255,255,0.03);border-radius:14px;border:1px solid rgba(255,255,255,0.05)">
+            <svg viewBox="0 0 400 60" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+              <circle cx="24" cy="30" r="8" fill="rgba(62,201,167,0.15)" stroke="#3EC9A7" stroke-width="1.5"/>
+              <circle cx="24" cy="30" r="3.5" fill="#3EC9A7"/>
+              <path d="M32 30 C80 30 100 20 160 28 C220 36 260 18 310 26 C340 30 360 30 376 30" stroke="url(#rg1)" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M32 30 C80 30 100 20 160 28 C220 36 260 18 310 26 C340 30 360 30 376 30" stroke="url(#rg1)" stroke-width="4" stroke-linecap="round" opacity=".2"/>
+              <circle cx="100" cy="28" r="4" fill="rgba(91,142,240,0.2)" stroke="#5B8EF0" stroke-width="1.5"/>
+              <circle cx="100" cy="28" r="2" fill="#5B8EF0"/>
+              <circle cx="220" cy="32" r="4" fill="rgba(91,142,240,0.2)" stroke="#5B8EF0" stroke-width="1.5"/>
+              <circle cx="220" cy="32" r="2" fill="#5B8EF0"/>
+              <circle cx="376" cy="30" r="8" fill="rgba(91,142,240,0.15)" stroke="#5B8EF0" stroke-width="1.5"/>
+              <circle cx="376" cy="30" r="3.5" fill="#5B8EF0"/>
+              <text x="15" y="52" font-size="9" fill="rgba(255,255,255,0.35)" font-family="Plus Jakarta Sans">Home</text>
+              <text x="340" y="52" font-size="9" fill="rgba(255,255,255,0.35)" font-family="Plus Jakarta Sans">UP Manila</text>
+              <defs>
+                <linearGradient id="rg1" x1="24" y1="30" x2="376" y2="30" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#3EC9A7"/><stop offset="1" stop-color="#5B8EF0"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+            <div class="chip chip-amber">
+              <svg viewBox="0 0 24 24"><path d="M20 17.58A5 5 0 0018 8h-1.26A8 8 0 104 16.25"/><line x1="8" y1="16" x2="8.01" y2="16"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+              <span>Rain 40%</span>
+            </div>
+            <div class="chip chip-teal">
+              <svg viewBox="0 0 24 24"><path d="M17 18a5 5 0 00-10 0"/><line x1="12" y1="9" x2="12" y2="2"/><line x1="4.22" y1="10.22" x2="5.64" y2="11.64"/></svg>
+              <span>AQI Moderate</span>
+            </div>
+            <div class="chip chip-blue">
+              <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              <span>Walking</span>
+            </div>
+          </div>
+          <div style="padding:11px 14px;background:rgba(91,142,240,0.05);border-radius:12px;border-left:2px solid rgba(91,142,240,0.3);margin-bottom:16px">
+            <p style="font-size:12.5px;color:rgba(255,255,255,0.5);line-height:1.6;font-family:var(--fb)"><span style="color:rgba(255,255,255,0.8);font-weight:600">Tip:</span> Bring an umbrella — rain expected after 2 PM along your route.</p>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button class="btn-p" onclick="openLogModal()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7-7 7 7"/></svg>
+              Log Ride
+            </button>
+            <button class="btn-s" onclick="goTo('routes',null)">View Route</button>
+          </div>
+        </div>
+
+        <!-- Favorite Routes Panel -->
+        <div style="display:flex;flex-direction:column;gap:0">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <span style="font-family:var(--fh);font-size:15px;font-weight:800;color:var(--w)">Favourite Routes</span>
+            <span style="font-size:12.5px;color:var(--blue);cursor:pointer;font-weight:600" onclick="goTo('routes',null)">See all</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:9px">
+            <div class="route-card">
+              <div class="route-icon" style="background:var(--blue-dim)"><svg viewBox="0 0 24 24" style="stroke:var(--blue)"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg></div>
+              <div style="flex:1;min-width:0">
+                <div style="font-family:var(--fh);font-size:13.5px;font-weight:700;color:var(--w)">Home → UP Manila</div>
+                <div style="font-size:11.5px;color:rgba(255,255,255,0.3);margin-top:2px;font-family:var(--fb)">Walking · 3.2 km · Today</div>
+              </div>
+              <div class="badge badge-teal">28 min</div>
+            </div>
+            <div class="route-card">
+              <div class="route-icon" style="background:rgba(62,201,167,0.08)"><svg viewBox="0 0 24 24" style="stroke:var(--teal)"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
+              <div style="flex:1;min-width:0">
+                <div style="font-family:var(--fh);font-size:13.5px;font-weight:700;color:var(--w)">Campus → Work</div>
+                <div style="font-size:11.5px;color:rgba(255,255,255,0.3);margin-top:2px;font-family:var(--fb)">Jeepney · 5.8 km · Yesterday</div>
+              </div>
+              <div class="badge badge-blue">42 min</div>
+            </div>
+            <div class="route-card">
+              <div class="route-icon" style="background:rgba(232,168,76,0.08)"><svg viewBox="0 0 24 24" style="stroke:var(--amber)"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg></div>
+              <div style="flex:1;min-width:0">
+                <div style="font-family:var(--fh);font-size:13.5px;font-weight:700;color:var(--w)">Home → Cubao LRT</div>
+                <div style="font-size:11.5px;color:rgba(255,255,255,0.3);margin-top:2px;font-family:var(--fb)">Tricycle + Train · 9.1 km</div>
+              </div>
+              <div class="badge badge-amber">55 min</div>
+            </div>
+          </div>
+          <!-- Data Freshness -->
+          <div class="dark-card" style="padding:16px;margin-top:9px">
+            <div style="font-family:var(--fh);font-size:13px;font-weight:700;color:var(--w);margin-bottom:12px">Data Freshness</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:12px;color:rgba(255,255,255,0.4);font-family:var(--fb)">Weather</span>
+                <div class="badge badge-teal">Success</div>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:12px;color:rgba(255,255,255,0.4);font-family:var(--fb)">Air Quality</span>
+                <div class="badge badge-teal">Success</div>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:12px;color:rgba(255,255,255,0.4);font-family:var(--fb)">Route Snapshots</span>
+                <div class="badge badge-amber">Partial</div>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:12px;color:rgba(255,255,255,0.4);font-family:var(--fb)">MMDA Traffic</span>
+                <div class="badge badge-red">Failed</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 3: Chart + Commute Tip -->
+      <div class="grid-7-5" style="margin-bottom:16px">
+        <!-- Chart Card -->
+        <div class="dark-card" style="padding:20px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+            <div>
+              <div style="font-family:var(--fh);font-size:14px;font-weight:700;color:var(--w)">Weather & Conditions</div>
+              <div style="font-size:11.5px;color:rgba(255,255,255,0.3);margin-top:2px;font-family:var(--fb)">7-day forecast along your route</div>
+            </div>
+            <div class="tab-row" style="width:auto">
+              <button class="tab active" style="font-size:11px;padding:5px 10px">Rain</button>
+              <button class="tab" style="font-size:11px;padding:5px 10px">AQI</button>
+              <button class="tab" style="font-size:11px;padding:5px 10px">Temp</button>
+            </div>
+          </div>
+          <!-- Inline bar chart -->
+          <div class="bar-chart" style="height:100px;align-items:flex-end;gap:8px;padding:0 4px">
+            <div class="bar-col"><div class="bar-seg" style="height:40%;background:rgba(91,142,240,0.2)"></div><span class="bar-lbl">Mon</span></div>
+            <div class="bar-col"><div class="bar-seg hi" style="height:80%"></div><span class="bar-lbl">Tue</span></div>
+            <div class="bar-col"><div class="bar-seg" style="height:55%;background:rgba(232,168,76,0.4)"></div><span class="bar-lbl">Wed</span></div>
+            <div class="bar-col"><div class="bar-seg" style="height:30%;background:rgba(91,142,240,0.2)"></div><span class="bar-lbl">Thu</span></div>
+            <div class="bar-col"><div class="bar-seg hi" style="height:65%"></div><span class="bar-lbl">Fri</span></div>
+            <div class="bar-col"><div class="bar-seg" style="height:45%;background:rgba(91,142,240,0.2)"></div><span class="bar-lbl">Sat</span></div>
+            <div class="bar-col"><div class="bar-seg" style="height:20%;background:rgba(91,142,240,0.2)"></div><span class="bar-lbl">Sun</span></div>
+          </div>
+          <div style="display:flex;gap:16px;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.05)">
+            <div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:2px;background:var(--blue)"></div><span style="font-size:11px;color:rgba(255,255,255,0.3);font-family:var(--fb)">Rain probability</span></div>
+            <div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:2px;background:var(--amber);opacity:.7"></div><span style="font-size:11px;color:rgba(255,255,255,0.3);font-family:var(--fb)">Caution threshold</span></div>
+          </div>
+        </div>
+
+        <!-- Commute Tip -->
+        <div style="display:flex;flex-direction:column;gap:9px">
+          <div class="glass-card" style="padding:18px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+              <div style="width:30px;height:30px;border-radius:9px;background:var(--amber-dim);display:flex;align-items:center;justify-content:center">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              </div>
+              <span style="font-family:var(--fh);font-size:13px;font-weight:700;color:var(--w)">Today's Tip</span>
+            </div>
+            <p style="font-size:13px;color:rgba(255,255,255,0.5);line-height:1.65;font-family:var(--fb)">Rain might slow things down later. Leave 10 minutes earlier if heading out after 2 PM.</p>
+          </div>
+          <div class="dark-card" style="padding:18px">
+            <div style="font-family:var(--fh);font-size:13px;font-weight:700;color:var(--w);margin-bottom:12px">Quick Actions</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <button class="btn-teal" style="width:100%;justify-content:center" onclick="openLogModal()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7-7 7 7"/></svg>
+                Log a Ride
+              </button>
+              <button class="btn-s" style="width:100%;justify-content:center" onclick="goTo('routes',null)">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add Route
+              </button>
+              <button class="btn-s" style="width:100%;justify-content:center" onclick="goTo('insights',null)">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+                View Insights
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 4: Recent Logs Table -->
+      <div class="dark-card" style="padding:0;overflow:hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:18px 20px 14px">
+          <div>
+            <div style="font-family:var(--fh);font-size:14px;font-weight:700;color:var(--w)">Recent Commute Logs</div>
+            <div style="font-size:11.5px;color:rgba(255,255,255,0.3);margin-top:2px;font-family:var(--fb)">Last 7 entries across all routes</div>
+          </div>
+          <button class="btn-s" style="padding:7px 14px;font-size:12px" onclick="goTo('insights',null)">View All</button>
+        </div>
+        <table class="data-table" style="width:100%">
+          <thead>
+            <tr>
+              <th>Route</th><th>Date</th><th>Duration</th><th>Crowd</th><th>Rating</th><th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="td-main">Home → UP Manila</td>
+              <td>Today</td>
+              <td><span class="badge badge-teal">28 min</span></td>
+              <td><span style="font-size:12px;color:var(--teal)">Light</span></td>
+              <td><div class="stars">
+                <svg class="star fill" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01z"/></svg>
+                <svg class="star fill" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01z"/></svg>
+                <svg class="star fill" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01z"/></svg>
+                <svg class="star fill" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01z"/></svg>
+                <svg class="star empty" viewBox="0 0 24 24" style="stroke:var(--amber);stroke-width:1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01z"/></svg>
+              </div></td>
+              <td style="color:rgba(255,255,255,0.3)">—</td>
+            </tr>
+            <tr>
+              <td class="td-main">Campus → Work</td>
+              <td>Yesterday</td>
+              <td><span class="badge badge-amber">48 min</span></td>
+              <td><span style="font-size:12px;color:var(--red)">Crowded</span></td>
+              <td><div class="stars">
+                <svg class="star fill" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01z"/></svg>
+                <svg class="star fill" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01z"/></svg>
+                <svg class="star fill" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01z"/></svg>
+                <svg class="star empty" viewBox="0 0 24 24" style="stroke:var(--amber);stroke-width:1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01z"/></svg>
+                <svg class="star empty" viewBox="0 0 24 24" style="stroke:var(--amber);stroke-width:1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01z"/></svg>
+              </div></td>
+              <td style="color:rgba(255,255,255,0.3);font-size:12px">Heavy traffic on Quezon Ave</td>
+            </tr>
+            <tr>
+              <td class="td-main">Home → UP Manila</td>
+              <td>May 29</td>
+              <td><span class="badge badge-teal">26 min</span></td>
+              <td><span style="font-size:12px;color:var(--teal)">Light</span></td>
+              <td><div class="stars">
+                <svg class="star fill" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01z"/></svg>
+                <svg class="star fill" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01z"/></svg>
+                <svg class="star fill" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01z"/></svg>
+                <svg class="star fill" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01z"/></svg>
+                <svg class="star fill" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01z"/></svg>
+              </div></td>
+              <td style="color:rgba(255,255,255,0.3)">—</td>
+            </tr>
+            <tr>
+              <td class="td-main">Home → Cubao LRT</td>
+              <td>May 28</td>
+              <td><span class="badge badge-blue">58 min</span></td>
+              <td><span style="font-size:12px;color:var(--amber)">Moderate</span></td>
+              <td><div class="stars">
+                <svg class="star fill" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01z"/></svg>
+                <svg class="star fill" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01z"/></svg>
+                <svg class="star fill" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01z"/></svg>
+                <svg class="star fill" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01z"/></svg>
+                <svg class="star empty" viewBox="0 0 24 24" style="stroke:var(--amber);stroke-width:1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01z"/></svg>
+              </div></td>
+              <td style="color:rgba(255,255,255,0.3);font-size:12px">LRT2 was on time</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div><!-- /page-dashboard -->
+
+    <!-- ═══════════ ROUTES ═══════════ -->
+    <div class="page" id="page-routes">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+        <div>
+          <div style="font-family:var(--fh);font-size:22px;font-weight:800;color:var(--w);letter-spacing:-.3px">My Routes</div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.35);margin-top:4px;font-family:var(--fb)">Manage your saved commute routes and daily travel patterns.</div>
+        </div>
+        <button class="btn-p" onclick="openAddRoute()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Route
+        </button>
+      </div>
+
+      <div class="grid-3">
+        <!-- Route Card 1 -->
+        <div class="dark-card" style="padding:18px;display:flex;flex-direction:column;gap:14px;transition:transform .15s;cursor:pointer" onmouseenter="this.style.transform='translateY(-2px)'" onmouseleave="this.style.transform='translateY(0)'">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div class="route-icon" style="background:var(--blue-dim)"><svg viewBox="0 0 24 24" style="stroke:var(--blue)"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg></div>
+            <span style="font-size:16px;color:var(--amber)">★</span>
+          </div>
+          <div>
+            <div style="font-family:var(--fh);font-size:15px;font-weight:700;color:var(--w)">Home → UP Manila</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.3);margin-top:3px;font-family:var(--fb)">Walking · 3.2 km</div>
+          </div>
+          <div style="display:flex;gap:7px;flex-wrap:wrap">
+            <div class="badge badge-teal">28 min est.</div>
+            <div class="badge badge-blue">Today</div>
+          </div>
+          <div style="border-top:1px solid rgba(255,255,255,0.05);padding-top:12px;display:flex;gap:8px">
+            <button class="btn-teal" style="flex:1;justify-content:center" onclick="openLogModal()">Log Ride</button>
+            <button class="btn-s" style="padding:9px 12px">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Route Card 2 -->
+        <div class="dark-card" style="padding:18px;display:flex;flex-direction:column;gap:14px;transition:transform .15s;cursor:pointer" onmouseenter="this.style.transform='translateY(-2px)'" onmouseleave="this.style.transform='translateY(0)'">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div class="route-icon" style="background:rgba(62,201,167,0.08)"><svg viewBox="0 0 24 24" style="stroke:var(--teal)"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+            <span style="font-size:16px;color:rgba(255,255,255,0.15)">☆</span>
+          </div>
+          <div>
+            <div style="font-family:var(--fh);font-size:15px;font-weight:700;color:var(--w)">Campus → Work</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.3);margin-top:3px;font-family:var(--fb)">Jeepney · 5.8 km</div>
+          </div>
+          <div style="display:flex;gap:7px;flex-wrap:wrap">
+            <div class="badge badge-blue">42 min est.</div>
+            <div class="badge" style="background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.3);border:1px solid rgba(255,255,255,0.07)">Yesterday</div>
+          </div>
+          <div style="border-top:1px solid rgba(255,255,255,0.05);padding-top:12px;display:flex;gap:8px">
+            <button class="btn-teal" style="flex:1;justify-content:center" onclick="openLogModal()">Log Ride</button>
+            <button class="btn-s" style="padding:9px 12px">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Route Card 3 -->
+        <div class="dark-card" style="padding:18px;display:flex;flex-direction:column;gap:14px;transition:transform .15s;cursor:pointer" onmouseenter="this.style.transform='translateY(-2px)'" onmouseleave="this.style.transform='translateY(0)'">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div class="route-icon" style="background:rgba(232,168,76,0.08)"><svg viewBox="0 0 24 24" style="stroke:var(--amber)"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg></div>
+            <span style="font-size:16px;color:rgba(255,255,255,0.15)">☆</span>
+          </div>
+          <div>
+            <div style="font-family:var(--fh);font-size:15px;font-weight:700;color:var(--w)">Home → Cubao LRT</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.3);margin-top:3px;font-family:var(--fb)">Tricycle + Train · 9.1 km</div>
+          </div>
+          <div style="display:flex;gap:7px;flex-wrap:wrap">
+            <div class="badge badge-amber">55 min est.</div>
+            <div class="badge" style="background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.3);border:1px solid rgba(255,255,255,0.07)">May 28</div>
+          </div>
+          <div style="border-top:1px solid rgba(255,255,255,0.05);padding-top:12px;display:flex;gap:8px">
+            <button class="btn-teal" style="flex:1;justify-content:center" onclick="openLogModal()">Log Ride</button>
+            <button class="btn-s" style="padding:9px 12px">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /page-routes -->
+
+    <!-- ═══════════ INSIGHTS ═══════════ -->
+    <div class="page" id="page-insights">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+        <div>
+          <div style="font-family:var(--fh);font-size:22px;font-weight:800;color:var(--w);letter-spacing:-.3px">Insights</div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.35);margin-top:4px;font-family:var(--fb)">Understand your commute patterns over time.</div>
+        </div>
+        <div class="tab-row" style="width:auto">
+          <button class="tab active" onclick="selTab(this)">Week</button>
+          <button class="tab" onclick="selTab(this)">Month</button>
+          <button class="tab" onclick="selTab(this)">All Time</button>
+        </div>
+      </div>
+
+      <!-- KPI Row -->
+      <div class="grid-4" style="margin-bottom:16px">
+        <div class="metric-card">
+          <div class="lbl">Avg Commute Time</div>
+          <div class="metric-val">31<span style="font-size:15px;font-weight:400;color:rgba(255,255,255,0.3)">m</span></div>
+          <div class="metric-trend" style="color:var(--teal)">↓ 3 min vs last period</div>
+        </div>
+        <div class="metric-card">
+          <div class="lbl">Most Used Route</div>
+          <div class="metric-val" style="font-size:15px;margin-top:12px;line-height:1.3">Home →<br>UP Manila</div>
+          <div class="metric-trend" style="color:rgba(255,255,255,0.3)">8 of 14 logs</div>
+        </div>
+        <div class="metric-card">
+          <div class="lbl">Avg Rating</div>
+          <div class="metric-val">4.2<span style="font-size:16px;color:var(--amber)"> ★</span></div>
+          <div class="metric-trend" style="color:var(--amber)">+0.3 vs last month</div>
+        </div>
+        <div class="metric-card">
+          <div class="lbl">Common Crowd</div>
+          <div class="metric-val" style="font-size:22px;color:var(--amber);margin-top:10px">Moderate</div>
+          <div class="metric-trend" style="color:rgba(255,255,255,0.3)">45% of logs</div>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="grid-2" style="margin-bottom:16px">
+        <!-- Duration Trend -->
+        <div class="dark-card" style="padding:20px">
+          <div style="font-family:var(--fh);font-size:14px;font-weight:700;color:var(--w);margin-bottom:4px">Commute Duration Trend</div>
+          <div style="font-size:11.5px;color:rgba(255,255,255,0.3);margin-bottom:16px;font-family:var(--fb)">Daily minutes over the past week</div>
+          <div style="position:relative;height:110px">
+            <svg viewBox="0 0 280 90" fill="none" style="width:100%;height:100%">
+              <path d="M10 70 L50 55 L90 45 L130 60 L170 30 L210 48 L250 35" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              <path d="M10 70 L50 55 L90 45 L130 60 L170 30 L210 48 L250 35 L250 90 L10 90Z" fill="url(#dg1)" opacity=".4"/>
+              <circle cx="170" cy="30" r="4" fill="var(--blue)"/>
+              <circle cx="250" cy="35" r="4" fill="var(--teal)"/>
+              <line x1="10" y1="88" x2="250" y2="88" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+              <text x="6" y="92" font-size="8" fill="rgba(255,255,255,0.25)" font-family="Plus Jakarta Sans">Mon</text>
+              <text x="46" y="92" font-size="8" fill="rgba(255,255,255,0.25)" font-family="Plus Jakarta Sans">Tue</text>
+              <text x="86" y="92" font-size="8" fill="rgba(255,255,255,0.25)" font-family="Plus Jakarta Sans">Wed</text>
+              <text x="125" y="92" font-size="8" fill="rgba(255,255,255,0.25)" font-family="Plus Jakarta Sans">Thu</text>
+              <text x="163" y="92" font-size="8" fill="rgba(255,255,255,0.25)" font-family="Plus Jakarta Sans">Fri</text>
+              <text x="203" y="92" font-size="8" fill="rgba(255,255,255,0.25)" font-family="Plus Jakarta Sans">Sat</text>
+              <text x="243" y="92" font-size="8" fill="rgba(255,255,255,0.25)" font-family="Plus Jakarta Sans">Sun</text>
+              <defs>
+                <linearGradient id="dg1" x1="130" y1="0" x2="130" y2="90" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#5B8EF0" stop-opacity=".3"/>
+                  <stop offset="1" stop-color="#5B8EF0" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Crowd Distribution -->
+        <div class="dark-card" style="padding:20px">
+          <div style="font-family:var(--fh);font-size:14px;font-weight:700;color:var(--w);margin-bottom:4px">Crowd Level Distribution</div>
+          <div style="font-size:11.5px;color:rgba(255,255,255,0.3);margin-bottom:18px;font-family:var(--fb)">Across all logged rides this month</div>
+          <div style="display:flex;flex-direction:column;gap:11px">
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+                <span style="font-size:12px;color:rgba(255,255,255,0.45);font-family:var(--fb)">Light</span>
+                <span style="font-size:12px;color:var(--teal);font-weight:600;font-family:var(--fb)">30%</span>
+              </div>
+              <div class="pbar-wrap"><div class="pbar-fill" style="width:30%;background:var(--teal);opacity:.7"></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+                <span style="font-size:12px;color:rgba(255,255,255,0.45);font-family:var(--fb)">Moderate</span>
+                <span style="font-size:12px;color:var(--amber);font-weight:600;font-family:var(--fb)">45%</span>
+              </div>
+              <div class="pbar-wrap"><div class="pbar-fill" style="width:45%;background:var(--amber);opacity:.7"></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+                <span style="font-size:12px;color:rgba(255,255,255,0.45);font-family:var(--fb)">Crowded</span>
+                <span style="font-size:12px;color:var(--red);font-weight:600;font-family:var(--fb)">25%</span>
+              </div>
+              <div class="pbar-wrap"><div class="pbar-fill" style="width:25%;background:var(--red);opacity:.7"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Route Usage + Pattern Summary -->
+      <div class="grid-2" style="margin-bottom:0">
+        <div class="dark-card" style="padding:20px">
+          <div style="font-family:var(--fh);font-size:14px;font-weight:700;color:var(--w);margin-bottom:16px">Route Usage</div>
+          <div style="display:flex;flex-direction:column;gap:11px">
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+                <span style="font-size:12.5px;color:var(--w);font-family:var(--fh);font-weight:600">Home → UP Manila</span>
+                <span style="font-size:12px;color:var(--blue);font-weight:600;font-family:var(--fb)">8 rides</span>
+              </div>
+              <div class="pbar-wrap" style="height:5px"><div class="pbar-fill" style="width:57%;background:var(--blue)"></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+                <span style="font-size:12.5px;color:var(--w);font-family:var(--fh);font-weight:600">Campus → Work</span>
+                <span style="font-size:12px;color:var(--teal);font-weight:600;font-family:var(--fb)">4 rides</span>
+              </div>
+              <div class="pbar-wrap" style="height:5px"><div class="pbar-fill" style="width:29%;background:var(--teal)"></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+                <span style="font-size:12.5px;color:var(--w);font-family:var(--fh);font-weight:600">Home → Cubao LRT</span>
+                <span style="font-size:12px;color:var(--amber);font-weight:600;font-family:var(--fb)">2 rides</span>
+              </div>
+              <div class="pbar-wrap" style="height:5px"><div class="pbar-fill" style="width:14%;background:var(--amber)"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-card" style="padding:22px;display:flex;flex-direction:column;justify-content:space-between">
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+              <div style="width:28px;height:28px;border-radius:8px;background:var(--blue-dim);display:flex;align-items:center;justify-content:center">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              </div>
+              <span style="font-family:var(--fh);font-size:13.5px;font-weight:700;color:var(--w)">Pattern Summary</span>
+            </div>
+            <p style="font-size:13px;color:rgba(255,255,255,0.5);line-height:1.7;font-family:var(--fb)">Your route history is forming a pattern. You usually log faster trips in the morning, and your Home → UP Manila route has the most consistent travel time.</p>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06)">
+            <div style="flex:1;text-align:center">
+              <div style="font-family:var(--fh);font-size:20px;font-weight:800;color:var(--blue)">82%</div>
+              <div style="font-size:10.5px;color:rgba(255,255,255,0.3);font-family:var(--fb);margin-top:2px">On-time rate</div>
+            </div>
+            <div style="width:1px;background:rgba(255,255,255,0.07)"></div>
+            <div style="flex:1;text-align:center">
+              <div style="font-family:var(--fh);font-size:20px;font-weight:800;color:var(--teal)">4.2</div>
+              <div style="font-size:10.5px;color:rgba(255,255,255,0.3);font-family:var(--fb);margin-top:2px">Avg rating</div>
+            </div>
+            <div style="width:1px;background:rgba(255,255,255,0.07)"></div>
+            <div style="flex:1;text-align:center">
+              <div style="font-family:var(--fh);font-size:20px;font-weight:800;color:var(--amber)">14</div>
+              <div style="font-size:10.5px;color:rgba(255,255,255,0.3);font-family:var(--fb);margin-top:2px">Logs this month</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /page-insights -->
+
+    <!-- ═══════════ PIPELINE ═══════════ -->
+    <div class="page" id="page-pipeline">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+        <div>
+          <div style="font-family:var(--fh);font-size:22px;font-weight:800;color:var(--w);letter-spacing:-.3px">Pipeline</div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.35);margin-top:4px;font-family:var(--fb)">Daily API ingestion and data freshness monitoring.</div>
+          <div style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:5px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:100px">
+            <div style="width:6px;height:6px;border-radius:50%;background:var(--amber)"></div>
+            <span style="font-size:12px;color:rgba(255,255,255,0.4);font-family:var(--fb)">Last run: Today, 6:05 AM</span>
+          </div>
+        </div>
+        <button class="btn-s">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+          Retry Failed Sources
+        </button>
+      </div>
+
+      <!-- KPI Row -->
+      <div class="grid-4" style="margin-bottom:18px">
+        <div class="metric-card">
+          <div class="lbl">Sources</div>
+          <div class="metric-val">4</div>
+          <div class="metric-trend" style="color:rgba(255,255,255,0.3)">configured</div>
+        </div>
+        <div class="metric-card">
+          <div class="lbl">Successful</div>
+          <div class="metric-val" style="color:var(--teal)">3</div>
+          <div class="metric-trend" style="color:var(--teal)">75% success rate</div>
+        </div>
+        <div class="metric-card">
+          <div class="lbl">Rows Inserted</div>
+          <div class="metric-val">847</div>
+          <div class="metric-trend" style="color:var(--blue)">this run</div>
+        </div>
+        <div class="metric-card">
+          <div class="lbl">Failed</div>
+          <div class="metric-val" style="color:var(--red)">1</div>
+          <div class="metric-trend" style="color:var(--red)">connection timeout</div>
+        </div>
+      </div>
+
+      <!-- Main table + side panel -->
+      <div class="grid-7-5">
+        <!-- Pipeline Table -->
+        <div class="dark-card" style="padding:0;overflow:hidden">
+          <div style="padding:18px 20px 14px;border-bottom:1px solid rgba(255,255,255,0.05)">
+            <div style="font-family:var(--fh);font-size:14px;font-weight:700;color:var(--w)">Ingestion Log</div>
+            <div style="font-size:11.5px;color:rgba(255,255,255,0.3);margin-top:2px;font-family:var(--fb)">Current run · sorted by execution time</div>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Source</th><th>Status</th><th>Rows</th><th>Executed At</th><th>Error</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div class="ld" style="background:var(--teal)"></div>
+                    <span class="td-main" style="font-size:13px">open_meteo_weather</span>
+                  </div>
+                </td>
+                <td><div class="badge badge-teal">Success</div></td>
+                <td style="font-family:var(--fh);font-weight:700">3</td>
+                <td>Today, 6:00 AM</td>
+                <td style="color:rgba(255,255,255,0.2)">—</td>
+              </tr>
+              <tr>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div class="ld" style="background:var(--teal)"></div>
+                    <span class="td-main" style="font-size:13px">open_meteo_air_quality</span>
+                  </div>
+                </td>
+                <td><div class="badge badge-teal">Success</div></td>
+                <td style="font-family:var(--fh);font-weight:700">12</td>
+                <td>Today, 6:02 AM</td>
+                <td style="color:rgba(255,255,255,0.2)">—</td>
+              </tr>
+              <tr>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div class="ld" style="background:var(--amber)"></div>
+                    <span class="td-main" style="font-size:13px">osrm_route</span>
+                  </div>
+                </td>
+                <td><div class="badge badge-amber">Partial</div></td>
+                <td style="font-family:var(--fh);font-weight:700">832</td>
+                <td>Today, 6:04 AM</td>
+                <td style="color:var(--amber);font-size:12px">2 routes skipped</td>
+              </tr>
+              <tr>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div class="ld" style="background:var(--red)"></div>
+                    <span class="td-main" style="font-size:13px">manual_refresh_test</span>
+                  </div>
+                </td>
+                <td><div class="badge badge-red">Failed</div></td>
+                <td style="font-family:var(--fh);font-weight:700;color:rgba(255,255,255,0.3)">0</td>
+                <td>Today, 6:05 AM</td>
+                <td style="color:var(--red);font-size:12px">Connection timeout</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Side Panel -->
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <!-- Architecture -->
+          <div class="dark-card" style="padding:20px">
+            <div style="font-family:var(--fh);font-size:13.5px;font-weight:700;color:var(--w);margin-bottom:16px">Pipeline Architecture</div>
+            <div style="display:flex;align-items:center;gap:0">
+              <div class="pipe-step">
+                <div class="pipe-step-icon" style="background:var(--blue-dim)">
+                  <svg viewBox="0 0 24 24" style="stroke:var(--blue)"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+                </div>
+                <span style="font-size:11px;color:rgba(255,255,255,0.35);font-family:var(--fb);font-weight:600">Extract</span>
+              </div>
+              <div class="pipe-arrow">→</div>
+              <div class="pipe-step">
+                <div class="pipe-step-icon" style="background:rgba(62,201,167,0.1)">
+                  <svg viewBox="0 0 24 24" style="stroke:var(--teal)"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                </div>
+                <span style="font-size:11px;color:rgba(255,255,255,0.35);font-family:var(--fb);font-weight:600">Transform</span>
+              </div>
+              <div class="pipe-arrow">→</div>
+              <div class="pipe-step">
+                <div class="pipe-step-icon" style="background:rgba(232,168,76,0.1)">
+                  <svg viewBox="0 0 24 24" style="stroke:var(--amber)"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                </div>
+                <span style="font-size:11px;color:rgba(255,255,255,0.35);font-family:var(--fb);font-weight:600">Load</span>
+              </div>
+            </div>
+            <div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.05)">
+              <p style="font-size:12px;color:rgba(255,255,255,0.35);line-height:1.65;font-family:var(--fb)">Raw API responses are stored before transformation. Clean rows are upserted into analytics-ready tables. Each run writes an observability log.</p>
+            </div>
+          </div>
+
+          <!-- Schedule -->
+          <div class="dark-card" style="padding:18px">
+            <div style="font-family:var(--fh);font-size:13px;font-weight:700;color:var(--w);margin-bottom:12px">Run Schedule</div>
+            <div style="display:flex;flex-direction:column;gap:9px">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:12px;color:rgba(255,255,255,0.4);font-family:var(--fb)">Primary run</span>
+                <span style="font-size:12.5px;color:var(--w);font-family:var(--fh);font-weight:600">6:00 AM daily</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:12px;color:rgba(255,255,255,0.4);font-family:var(--fb)">Retry window</span>
+                <span style="font-size:12.5px;color:var(--w);font-family:var(--fh);font-weight:600">6:30 AM</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:12px;color:rgba(255,255,255,0.4);font-family:var(--fb)">Data retention</span>
+                <span style="font-size:12.5px;color:var(--w);font-family:var(--fh);font-weight:600">90 days</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /page-pipeline -->
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- ═══════════ LOG RIDE MODAL ═══════════ -->
+<div class="modal-bg" id="log-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Log a Commute</div>
+      <div class="modal-close" onclick="closeLogModal()">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div>
+        <div class="lbl" style="margin-bottom:7px">Route</div>
+        <select class="inp">
+          <option style="background:#111419">Home → UP Manila</option>
+          <option style="background:#111419">Campus → Work</option>
+          <option style="background:#111419">Home → Cubao LRT</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:10px">
+        <div style="flex:1">
+          <div class="lbl" style="margin-bottom:7px">Date</div>
+          <input class="inp" type="date">
+        </div>
+        <div style="flex:1">
+          <div class="lbl" style="margin-bottom:7px">Duration (min)</div>
+          <input class="inp" type="number" placeholder="28">
+        </div>
+      </div>
+      <div>
+        <div class="lbl" style="margin-bottom:8px">Crowd Level</div>
+        <div class="pill-row">
+          <div class="pill active" onclick="selPill(this)">Light</div>
+          <div class="pill" onclick="selPill(this)">Moderate</div>
+          <div class="pill" onclick="selPill(this)">Crowded</div>
+          <div class="pill" onclick="selPill(this)">Very Crowded</div>
+        </div>
+      </div>
+      <div>
+        <div class="lbl" style="margin-bottom:8px">Rating</div>
+        <div id="star-rating" style="display:flex;gap:8px">
+          <span data-v="1" onclick="setRating(1)" style="font-size:24px;cursor:pointer;opacity:.25;transition:opacity .1s">★</span>
+          <span data-v="2" onclick="setRating(2)" style="font-size:24px;cursor:pointer;opacity:.25;transition:opacity .1s">★</span>
+          <span data-v="3" onclick="setRating(3)" style="font-size:24px;cursor:pointer;opacity:.25;transition:opacity .1s">★</span>
+          <span data-v="4" onclick="setRating(4)" style="font-size:24px;cursor:pointer;opacity:.25;transition:opacity .1s">★</span>
+          <span data-v="5" onclick="setRating(5)" style="font-size:24px;cursor:pointer;opacity:.25;transition:opacity .1s">★</span>
+        </div>
+      </div>
+      <div>
+        <div class="lbl" style="margin-bottom:7px">Notes</div>
+        <textarea class="inp" rows="2" placeholder="Notes about this ride…" style="resize:none;font-family:var(--fb)"></textarea>
+      </div>
+      <button class="btn-p" style="width:100%;justify-content:center;padding:13px" onclick="closeLogModal()">Save Log</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ ADD ROUTE MODAL ═══════════ -->
+<div class="modal-bg" id="add-route-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Add New Route</div>
+      <div class="modal-close" onclick="closeAddRoute()">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div>
+        <div class="lbl" style="margin-bottom:7px">Route Name</div>
+        <input class="inp" placeholder="e.g. Home → School">
+      </div>
+      <div style="display:flex;gap:10px">
+        <div style="flex:1">
+          <div class="lbl" style="margin-bottom:7px">Origin</div>
+          <input class="inp" placeholder="From">
+        </div>
+        <div style="flex:1">
+          <div class="lbl" style="margin-bottom:7px">Destination</div>
+          <input class="inp" placeholder="To">
+        </div>
+      </div>
+      <div>
+        <div class="lbl" style="margin-bottom:8px">Preferred Mode</div>
+        <div class="pill-row">
+          <div class="pill active" onclick="selPill(this)">Walking</div>
+          <div class="pill" onclick="selPill(this)">Jeepney</div>
+          <div class="pill" onclick="selPill(this)">Bus</div>
+          <div class="pill" onclick="selPill(this)">Train</div>
+          <div class="pill" onclick="selPill(this)">Bike</div>
+          <div class="pill" onclick="selPill(this)">Car</div>
+          <div class="pill" onclick="selPill(this)">Mixed</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <label class="tg"><input type="checkbox" checked><div class="tgs"></div></label>
+        <span style="font-size:13px;color:rgba(255,255,255,0.45);font-family:var(--fb)">Mark as favourite</span>
+      </div>
+      <button class="btn-p" style="width:100%;justify-content:center;padding:13px" onclick="closeAddRoute()">Save Route</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── AUTH ── */
+let suCurrent=1;
+
+function showAuth(screen){
+  document.querySelectorAll('.auth-screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('auth-'+screen).classList.add('active');
+  if(screen==='signup'){suStep(1,true);}
+}
+
+function suStep(n,reset){
+  suCurrent=n;
+  [1,2,3].forEach(i=>{
+    const el=document.getElementById('su-step'+i);
+    if(el)el.style.display=i===n?'block':'none';
+  });
+  document.querySelectorAll('#su-dots .step-dot').forEach((d,i)=>{
+    d.classList.toggle('active',i<n);
+  });
+}
+
+function enterDashboard(){
+  const ov=document.getElementById('auth-overlay');
+  ov.classList.add('hidden');
+  setTimeout(()=>{ov.style.display='none';},360);
+}
+
+function togglePw(id,btn){
+  const inp=document.getElementById(id);
+  const showing=inp.type==='text';
+  inp.type=showing?'password':'text';
+  btn.querySelector('svg').innerHTML=showing
+    ?'<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'
+    :'<path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>';
+}
+
+const pages={
+  dashboard:{id:'page-dashboard',title:'Good morning, Josie',sub:'Your commute dashboard is ready for today.'},
+  routes:{id:'page-routes',title:'My Routes',sub:'Manage your saved commute routes.'},
+  insights:{id:'page-insights',title:'Insights',sub:'Understand your commute patterns over time.'},
+  pipeline:{id:'page-pipeline',title:'Pipeline',sub:'Daily API ingestion and data freshness monitoring.'}
+};
+let cur='dashboard';
+
+function goTo(id,btn){
+  document.getElementById(pages[cur].id).classList.remove('active');
+  document.getElementById(pages[id].id).classList.add('active');
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  document.getElementById('top-title').textContent=pages[id].title;
+  document.getElementById('top-sub').textContent=pages[id].sub;
+  cur=id;
+  document.getElementById('content').scrollTop=0;
+}
+
+function openLogModal(){document.getElementById('log-modal').classList.add('open')}
+function closeLogModal(){document.getElementById('log-modal').classList.remove('open')}
+function openAddRoute(){document.getElementById('add-route-modal').classList.add('open')}
+function closeAddRoute(){document.getElementById('add-route-modal').classList.remove('open')}
+
+function selPill(el){
+  el.closest('.pill-row').querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+}
+function selTab(el){
+  el.closest('.tab-row').querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+}
+function setRating(v){
+  document.querySelectorAll('#star-rating span').forEach(s=>{
+    const n=parseInt(s.dataset.v);
+    s.style.opacity=n<=v?'1':'0.2';
+    s.style.color=n<=v?'var(--amber)':'rgba(255,255,255,0.3)';
+  });
+}
+
+document.getElementById('log-modal').addEventListener('click',function(e){
+  if(e.target===this)closeLogModal();
+});
+document.getElementById('add-route-modal').addEventListener('click',function(e){
+  if(e.target===this)closeAddRoute();
+});
+
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){closeLogModal();closeAddRoute();}
+});
+
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click',function(){selTab(this)});
+});
+</script>
+</body>
+</html>

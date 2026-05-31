@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LakbayLoop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;500;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+--bg:#050608;
+--bg2:#0A0D12;
+--card:#111419;
+--card2:#181C23;
+--glass:rgba(255,255,255,0.055);
+--gb:rgba(255,255,255,0.09);
+--w:#FFFFFF;
+--w60:rgba(255,255,255,0.6);
+--w30:rgba(255,255,255,0.3);
+--w10:rgba(255,255,255,0.1);
+--w06:rgba(255,255,255,0.06);
+/* Primary accent — cool blue */
+--blue:#5B8EF0;
+--blue-dim:rgba(91,142,240,0.12);
+--blue-border:rgba(91,142,240,0.25);
+/* Teal — success / confirmed states only */
+--teal:#3EC9A7;
+--teal-dim:rgba(62,201,167,0.1);
+--teal-border:rgba(62,201,167,0.2);
+/* Amber — warning / attention only */
+--amber:#E8A84C;
+--amber-dim:rgba(232,168,76,0.1);
+--amber-border:rgba(232,168,76,0.2);
+/* Danger */
+--red:#E05C5C;
+--red-dim:rgba(224,92,92,0.1);
+--red-border:rgba(224,92,92,0.2);
+/* Typography */
+--fh:'Cabinet Grotesk',sans-serif;
+--fb:'Plus Jakarta Sans',sans-serif;
+}
+html,body{height:100%;background:#0d0e11;display:flex;align-items:center;justify-content:center;font-family:var(--fb)}
+
+.phone{
+  width:390px;height:844px;background:var(--bg);border-radius:50px;
+  overflow:hidden;position:relative;flex-shrink:0;
+  box-shadow:0 0 0 1px rgba(255,255,255,0.07),0 50px 140px rgba(0,0,0,0.95),inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.phone::before{
+  content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:120px;height:32px;background:var(--bg);border-radius:0 0 20px 20px;z-index:100;
+}
+/* Ambient glow — subtle, not neon */
+.phone::after{
+  content:'';position:absolute;top:-120px;left:50%;transform:translateX(-50%);
+  width:300px;height:300px;
+  background:radial-gradient(circle,rgba(91,142,240,0.08) 0%,transparent 70%);
+  pointer-events:none;z-index:0;
+}
+.screen{width:100%;height:100%;overflow:hidden;position:relative}
+
+/* Pages */
+.page{
+  position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;
+  opacity:0;pointer-events:none;transform:translateY(6px);
+  transition:opacity .25s ease,transform .25s ease;
+  padding-bottom:96px;scrollbar-width:none;
+}
+.page::-webkit-scrollbar{display:none}
+.page.active{opacity:1;pointer-events:all;transform:translateY(0)}
+
+/* Status bar */
+.sb{position:relative;z-index:10;display:flex;justify-content:space-between;align-items:center;padding:52px 26px 0;height:70px}
+.sb-t{font-family:var(--fh);font-size:15px;font-weight:700;color:var(--w)}
+.sb-r{display:flex;gap:6px;align-items:center}
+.sig{display:flex;align-items:flex-end;gap:1.5px;height:11px}
+.sig span{background:rgba(255,255,255,0.65);border-radius:1px;width:2.5px}
+.sig span:nth-child(1){height:3px}.sig span:nth-child(2){height:6px}.sig span:nth-child(3){height:9px}.sig span:nth-child(4){height:11px}
+.bat{width:22px;height:11px;border:1.5px solid rgba(255,255,255,0.5);border-radius:3px;position:relative}
+.bat::before{content:'';position:absolute;right:-4px;top:50%;transform:translateY(-50%);width:2px;height:5px;background:rgba(255,255,255,0.5);border-radius:0 1px 1px 0}
+.bat::after{content:'';position:absolute;left:1.5px;top:1.5px;bottom:1.5px;right:35%;background:rgba(255,255,255,0.6);border-radius:1px}
+
+/* Buttons */
+.btn-p{width:100%;padding:17px;background:var(--w);color:#080A0F;border:none;border-radius:100px;font-family:var(--fh);font-size:15px;font-weight:700;cursor:pointer;transition:all .12s ease;letter-spacing:.01em}
+.btn-p:active{transform:scale(0.97);background:#e4e4e4}
+.btn-s{width:100%;padding:16px;background:rgba(255,255,255,0.07);color:var(--w);border:1px solid rgba(255,255,255,0.1);border-radius:100px;font-family:var(--fh);font-size:15px;font-weight:600;cursor:pointer;transition:all .12s ease}
+.btn-s:active{transform:scale(0.97);background:rgba(255,255,255,0.1)}
+
+/* Input */
+.inp{width:100%;padding:16px 18px;background:var(--card2);border:1px solid rgba(255,255,255,0.08);border-radius:16px;color:var(--w);font-family:var(--fb);font-size:15px;outline:none;transition:border-color .2s;-webkit-appearance:none}
+.inp::placeholder{color:rgba(255,255,255,0.25)}
+.inp:focus{border-color:rgba(91,142,240,0.4)}
+
+/* Bottom nav */
+.bnav{
+  position:absolute;bottom:16px;left:14px;right:14px;
+  background:rgba(17,20,25,0.92);border:1px solid rgba(255,255,255,0.08);
+  border-radius:26px;padding:10px 6px;display:flex;justify-content:space-around;align-items:center;z-index:50;
+}
+.ni{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 12px;border-radius:18px;cursor:pointer;transition:all .18s;border:none;background:transparent;min-width:50px}
+.ni svg{width:21px;height:21px;stroke:rgba(255,255,255,0.3);fill:none;stroke-width:1.8;transition:stroke .18s}
+.nl{font-size:10px;color:rgba(255,255,255,0.3);font-family:var(--fb);font-weight:500;transition:color .18s}
+.ni.active{background:rgba(91,142,240,0.1)}
+.ni.active svg{stroke:var(--blue)}
+.ni.active .nl{color:var(--blue)}
+.nc{background:var(--blue)!important;border-radius:18px!important;padding:10px 16px!important}
+.nc svg{stroke:var(--w)!important;stroke-width:2.2!important}
+
+/* Cards */
+.gc{background:var(--glass);border:1px solid var(--gb);border-radius:24px}
+.dc{background:var(--card);border:1px solid rgba(255,255,255,0.055);border-radius:20px}
+
+/* Labels */
+.lbl{font-size:11px;color:rgba(255,255,255,0.35);font-weight:600;letter-spacing:.6px;text-transform:uppercase;font-family:var(--fb)}
+
+/* Pills */
+.pr{display:flex;gap:7px;flex-wrap:wrap}
+.pl{padding:8px 15px;border-radius:100px;border:1px solid rgba(255,255,255,0.09);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);font-family:var(--fb);font-size:13px;font-weight:500;cursor:pointer;transition:all .18s;white-space:nowrap}
+.pl.active{background:var(--blue-dim);border-color:var(--blue-border);color:var(--blue)}
+
+/* Route card */
+.rc{background:var(--card);border:1px solid rgba(255,255,255,0.055);border-radius:20px;padding:16px;display:flex;align-items:center;gap:13px;cursor:pointer;transition:all .15s}
+.rc:active{transform:scale(0.985);background:var(--card2)}
+.ri{width:42px;height:42px;border-radius:13px;background:var(--blue-dim);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ri svg{width:19px;height:19px;stroke:var(--blue);fill:none;stroke-width:1.8}
+
+/* Status chips — teal for good, amber for caution */
+.chip-teal{display:inline-flex;align-items:center;gap:5px;background:var(--teal-dim);border:1px solid var(--teal-border);border-radius:100px;padding:5px 12px}
+.chip-teal svg{width:14px;height:14px;stroke:var(--teal);fill:none;stroke-width:2}
+.chip-teal span{font-size:12px;color:var(--teal);font-weight:600;font-family:var(--fb)}
+.chip-amber{display:inline-flex;align-items:center;gap:5px;background:var(--amber-dim);border:1px solid var(--amber-border);border-radius:100px;padding:5px 12px}
+.chip-amber svg{width:14px;height:14px;stroke:var(--amber);fill:none;stroke-width:2}
+.chip-amber span{font-size:12px;color:var(--amber);font-weight:600;font-family:var(--fb)}
+
+/* Status badge */
+.badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:100px;font-family:var(--fb);letter-spacing:.02em}
+.badge-teal{background:var(--teal-dim);color:var(--teal);border:1px solid var(--teal-border)}
+.badge-amber{background:var(--amber-dim);color:var(--amber);border:1px solid var(--amber-border)}
+.badge-red{background:var(--red-dim);color:var(--red);border:1px solid var(--red-border)}
+.badge-blue{background:var(--blue-dim);color:var(--blue);border:1px solid var(--blue-border)}
+
+/* Metric card */
+.mc{background:var(--card);border:1px solid rgba(255,255,255,0.055);border-radius:18px;padding:16px;flex:1;min-width:0}
+.mv{font-family:var(--fh);font-size:26px;font-weight:800;color:var(--w);margin-top:5px;line-height:1}
+.ms{font-size:11px;margin-top:5px;font-weight:600;font-family:var(--fb)}
+
+/* Quick action */
+.qa{display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer}
+.qac{width:54px;height:54px;border-radius:17px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.09);display:flex;align-items:center;justify-content:center;transition:all .15s}
+.qac:active{transform:scale(0.92);background:rgba(255,255,255,0.1)}
+.qac svg{width:21px;height:21px;stroke:rgba(255,255,255,0.7);fill:none;stroke-width:1.8}
+.qal{font-size:11px;color:rgba(255,255,255,0.4);font-weight:500;font-family:var(--fb)}
+
+/* Bar chart */
+.bc{display:flex;align-items:flex-end;gap:5px;height:72px}
+.bcc{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1}
+.bar{width:100%;background:rgba(91,142,240,0.15);border-radius:5px 5px 0 0;transition:background .2s}
+.bar.act{background:var(--blue)}
+.bl{font-size:9px;color:rgba(255,255,255,0.3);font-family:var(--fb)}
+
+/* Avatar */
+.av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--blue),#8BB4FF);display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-size:13px;font-weight:800;color:var(--bg);flex-shrink:0}
+
+/* Log dot */
+.ld{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:3px}
+
+/* Tabs */
+.tr{display:flex;background:rgba(255,255,255,0.04);border-radius:14px;padding:3px;gap:3px}
+.tb{flex:1;padding:8px;border-radius:11px;border:none;background:transparent;color:rgba(255,255,255,0.35);font-family:var(--fb);font-size:13px;font-weight:500;cursor:pointer;transition:all .18s}
+.tb.active{background:var(--card2);color:var(--w);font-weight:600}
+
+/* Step dot */
+.sd{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.2)}
+.sd.active{width:22px;border-radius:3px;background:var(--blue)}
+
+/* Toggle */
+.tg{position:relative;width:42px;height:23px}
+.tg input{opacity:0;width:0;height:0}
+.tgs{position:absolute;inset:0;background:rgba(255,255,255,0.12);border-radius:100px;cursor:pointer;transition:.25s}
+.tgs::before{content:'';position:absolute;width:17px;height:17px;left:3px;top:3px;background:var(--w60);border-radius:50%;transition:.25s}
+.tg input:checked+.tgs{background:var(--blue)}
+.tg input:checked+.tgs::before{transform:translateX(19px);background:var(--w)}
+
+/* Star */
+.str{width:13px;height:13px;stroke:var(--amber);fill:var(--amber)}
+.str.e{fill:transparent}
+
+/* Donut */
+.dw{position:relative;width:76px;height:76px;flex-shrink:0}
+.dw svg{transform:rotate(-90deg)}
+.dc2{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-size:15px;font-weight:800;color:var(--w)}
+
+/* Animations */
+@keyframes fu{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.f1{animation:fu .55s ease both}
+.f2{animation:fu .55s .08s ease both}
+.f3{animation:fu .55s .16s ease both}
+.f4{animation:fu .55s .24s ease both}
+.f5{animation:fu .55s .32s ease both}
+
+@media(max-width:420px){.phone{width:100%;height:100vh;border-radius:0}html,body{align-items:flex-start;background:#050608}}
+</style>
+</head>
+<body>
+<div class="phone">
+<div class="screen">
+
+<!-- ── LANDING ─────────────────────────────── -->
+<div class="page active" id="page-land" style="padding-bottom:0;overflow:hidden">
+
+  <!-- SVG route art -->
+  <div style="position:absolute;top:60px;left:50%;transform:translateX(-50%);width:320px;height:340px;pointer-events:none;z-index:0">
+    <svg viewBox="0 0 320 340" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%">
+      <circle cx="160" cy="170" r="120" stroke="rgba(91,142,240,0.07)" stroke-width="1"/>
+      <circle cx="160" cy="170" r="85" stroke="rgba(91,142,240,0.07)" stroke-width="1"/>
+      <circle cx="160" cy="170" r="50" stroke="rgba(91,142,240,0.09)" stroke-width="1"/>
+      <path d="M72 268 C90 240 110 210 130 188 C150 166 150 148 160 126 C170 104 185 95 205 98" stroke="url(#lg1)" stroke-width="2" stroke-linecap="round"/>
+      <path d="M72 268 C95 255 118 245 160 232 C192 222 200 165 205 98" stroke="rgba(255,255,255,0.04)" stroke-width="1.5" stroke-dasharray="3 5"/>
+      <circle cx="72" cy="268" r="7" fill="rgba(62,201,167,0.15)" stroke="#3EC9A7" stroke-width="1.5"/>
+      <circle cx="72" cy="268" r="3" fill="#3EC9A7"/>
+      <circle cx="205" cy="98" r="7" fill="rgba(91,142,240,0.15)" stroke="#5B8EF0" stroke-width="1.5"/>
+      <circle cx="205" cy="98" r="3" fill="#5B8EF0"/>
+      <circle cx="160" cy="170" r="5" fill="rgba(91,142,240,0.2)" stroke="#5B8EF0" stroke-width="1.5"/>
+      <circle cx="160" cy="170" r="2.5" fill="#5B8EF0"/>
+      <ellipse cx="160" cy="170" rx="60" ry="60" fill="url(#gl1)"/>
+      <defs>
+        <linearGradient id="lg1" x1="72" y1="268" x2="205" y2="98" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#3EC9A7"/>
+          <stop offset="1" stop-color="#5B8EF0"/>
+        </linearGradient>
+        <radialGradient id="gl1" cx="0.5" cy="0.5" r="0.5">
+          <stop stop-color="#5B8EF0" stop-opacity=".07"/>
+          <stop offset="1" stop-color="#5B8EF0" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+    </svg>
+  </div>
+
+  <div style="padding:0 24px;position:relative;z-index:1">
+    <div class="sb" style="padding:52px 0 0">
+      <span class="sb-t">9:41</span>
+      <div class="sb-r"><div class="sig"><span></span><span></span><span></span><span></span></div><div class="bat"></div></div>
+    </div>
+    <div class="f1" style="margin-top:28px;display:flex;align-items:center;gap:9px">
+      <div style="width:30px;height:30px;background:var(--blue);border-radius:9px;display:flex;align-items:center;justify-content:center">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>
+      </div>
+      <span style="font-family:var(--fh);font-size:17px;font-weight:800;color:var(--w);letter-spacing:-.3px">LakbayLoop</span>
+    </div>
+  </div>
+
+  <div style="position:absolute;bottom:0;left:0;right:0;padding:28px 24px;background:linear-gradient(to top,var(--bg) 65%,transparent);z-index:1">
+    <div class="f3" style="margin-bottom:6px">
+      <span style="font-size:11px;color:var(--blue);font-weight:700;letter-spacing:.8px;text-transform:uppercase;font-family:var(--fb)">Daily Commute Intelligence</span>
+    </div>
+    <div class="f3" style="font-family:var(--fh);font-size:40px;font-weight:900;color:var(--w);line-height:1.05;letter-spacing:-.8px;margin-bottom:12px">Your commute,<br>ready before<br>you leave.</div>
+    <p class="f4" style="font-size:14px;color:var(--w60);margin-bottom:28px;line-height:1.65;font-weight:400">Save routes, check conditions, log your ride, and understand your patterns over time.</p>
+    <div class="f5" style="display:flex;flex-direction:column;gap:11px">
+      <button class="btn-p" onclick="goTo('signup')">Create account</button>
+      <button class="btn-s" onclick="goTo('login')">Log in</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── LOGIN ───────────────────────────────── -->
+<div class="page" id="page-login">
+  <div style="padding:0 22px">
+    <div class="sb"><span class="sb-t">9:41</span><div class="sb-r"><div class="sig"><span></span><span></span><span></span><span></span></div><div class="bat"></div></div></div>
+    <button onclick="goTo('land')" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.09);border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;margin-top:14px;flex-shrink:0">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </button>
+    <div style="margin-top:22px">
+      <div style="font-family:var(--fh);font-size:32px;font-weight:900;color:var(--w);letter-spacing:-.5px;line-height:1.1">Welcome<br>back</div>
+      <p style="font-size:14px;color:var(--w60);margin-top:7px">Sign in to your LakbayLoop.</p>
+    </div>
+    <div style="margin-top:28px;display:flex;flex-direction:column;gap:12px">
+      <div>
+        <div class="lbl" style="margin-bottom:8px">Email</div>
+        <input class="inp" type="email" placeholder="you@email.com">
+      </div>
+      <div>
+        <div class="lbl" style="margin-bottom:8px">Password</div>
+        <input class="inp" type="password" placeholder="••••••••">
+      </div>
+    </div>
+    <div style="margin-top:10px;text-align:right">
+      <span style="font-size:13px;color:var(--blue);cursor:pointer;font-weight:500">Forgot password?</span>
+    </div>
+    <div style="margin-top:26px;display:flex;flex-direction:column;gap:12px">
+      <button class="btn-p" onclick="goTo('dashboard')">Log in</button>
+      <p style="text-align:center;font-size:13px;color:var(--w60)">No account? <span style="color:var(--blue);cursor:pointer;font-weight:600" onclick="goTo('signup')">Sign up</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- ── SIGNUP ──────────────────────────────── -->
+<div class="page" id="page-signup">
+  <div style="padding:0 22px">
+    <div class="sb"><span class="sb-t">9:41</span><div class="sb-r"><div class="sig"><span></span><span></span><span></span><span></span></div><div class="bat"></div></div></div>
+    <button onclick="goTo('land')" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.09);border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;margin-top:14px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </button>
+    <div style="margin-top:18px;display:flex;gap:6px" id="sdots">
+      <div class="sd active"></div><div class="sd"></div><div class="sd"></div>
+    </div>
+    <div id="ss1">
+      <div style="margin-top:18px">
+        <div style="font-family:var(--fh);font-size:30px;font-weight:900;color:var(--w);letter-spacing:-.4px;line-height:1.1">What should<br>we call you?</div>
+        <p style="font-size:14px;color:var(--w60);margin-top:7px">Create your LakbayLoop account.</p>
+      </div>
+      <div style="margin-top:24px;display:flex;flex-direction:column;gap:12px">
+        <input class="inp" type="text" placeholder="Full name">
+        <input class="inp" type="email" placeholder="Email address">
+      </div>
+      <button class="btn-p" style="margin-top:22px" onclick="suStep(2)">Continue</button>
+    </div>
+    <div id="ss2" style="display:none">
+      <div style="margin-top:18px">
+        <div style="font-family:var(--fh);font-size:30px;font-weight:900;color:var(--w);letter-spacing:-.4px;line-height:1.1">Secure your<br>account</div>
+      </div>
+      <div style="margin-top:24px;display:flex;flex-direction:column;gap:12px">
+        <input class="inp" type="password" placeholder="Create password">
+        <input class="inp" type="password" placeholder="Confirm password">
+      </div>
+      <button class="btn-p" style="margin-top:22px" onclick="suStep(3)">Continue</button>
+    </div>
+    <div id="ss3" style="display:none">
+      <div style="margin-top:18px">
+        <div style="font-family:var(--fh);font-size:30px;font-weight:900;color:var(--w);letter-spacing:-.4px;line-height:1.1">Where do you<br>commute from?</div>
+        <p style="font-size:14px;color:var(--w60);margin-top:7px">Optional — helps us personalise.</p>
+      </div>
+      <div style="margin-top:24px;display:flex;flex-direction:column;gap:14px">
+        <input class="inp" placeholder="School or workplace">
+        <div>
+          <div class="lbl" style="margin-bottom:10px">Preferred mode</div>
+          <div class="pr">
+            <div class="pl active">Jeep / Bus</div>
+            <div class="pl" onclick="selPill(this)">Walking</div>
+            <div class="pl" onclick="selPill(this)">Bike</div>
+            <div class="pl" onclick="selPill(this)">Car</div>
+          </div>
+        </div>
+      </div>
+      <button class="btn-p" style="margin-top:26px" onclick="goTo('dashboard')">Get started</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── DASHBOARD ───────────────────────────── -->
+<div class="page" id="page-dashboard">
+  <div style="padding:0 20px">
+    <div class="sb"><span class="sb-t">9:41</span><div class="sb-r"><div class="sig"><span></span><span></span><span></span><span></span></div><div class="bat"></div></div></div>
+
+    <!-- Top bar -->
+    <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
+      <div class="av">JD</div>
+      <div style="flex:1;background:var(--card2);border:1px solid rgba(255,255,255,0.07);border-radius:100px;padding:10px 15px;display:flex;align-items:center;gap:8px">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
+        <span style="font-size:14px;color:rgba(255,255,255,0.25);font-family:var(--fb)">Search routes…</span>
+      </div>
+      <button onclick="goTo('insights')" style="width:38px;height:38px;border-radius:13px;background:var(--blue-dim);border:1px solid var(--blue-border);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg>
+      </button>
+    </div>
+
+    <!-- Greeting -->
+    <div style="margin-top:22px">
+      <p style="font-size:13px;color:rgba(255,255,255,0.4);font-weight:500">Good morning, Josie</p>
+      <div style="font-family:var(--fh);font-size:27px;font-weight:900;color:var(--w);margin-top:3px;letter-spacing:-.4px;line-height:1.1">Ready for your<br>commute?</div>
+    </div>
+
+    <!-- Main commute card -->
+    <div class="gc" style="margin-top:16px;padding:20px;position:relative;overflow:hidden">
+      <div style="position:absolute;top:-40px;right:-30px;width:160px;height:160px;background:radial-gradient(circle,rgba(91,142,240,0.08),transparent 70%);pointer-events:none"></div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+        <div>
+          <div style="display:flex;align-items:center;gap:5px;margin-bottom:6px">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span style="font-size:12px;color:var(--blue);font-weight:700;font-family:var(--fb);letter-spacing:.02em">TODAY'S ROUTE</span>
+          </div>
+          <div style="font-family:var(--fh);font-size:17px;font-weight:800;color:var(--w)">Home → UP Manila</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.35);margin-top:3px;font-family:var(--fb)">Via Commonwealth Ave · 3.2 km</div>
+        </div>
+        <div class="badge badge-blue" style="font-size:13px;padding:5px 12px">28 min</div>
+      </div>
+      <!-- Condition chips -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <div class="chip-amber">
+          <svg viewBox="0 0 24 24"><path d="M20 17.58A5 5 0 0018 8h-1.26A8 8 0 104 16.25"/><line x1="8" y1="16" x2="8.01" y2="16"/><line x1="8" y1="20" x2="8.01" y2="20"/><line x1="12" y1="18" x2="12.01" y2="18"/><line x1="12" y1="22" x2="12.01" y2="22"/><line x1="16" y1="16" x2="16.01" y2="16"/><line x1="16" y1="20" x2="16.01" y2="20"/></svg>
+          <span>Rain 40%</span>
+        </div>
+        <div class="chip-teal">
+          <svg viewBox="0 0 24 24"><path d="M17 18a5 5 0 00-10 0"/><line x1="12" y1="9" x2="12" y2="2"/><line x1="4.22" y1="10.22" x2="5.64" y2="11.64"/><line x1="1" y1="18" x2="3" y2="18"/><line x1="21" y1="18" x2="23" y2="18"/><line x1="18.36" y1="11.64" x2="19.78" y2="10.22"/></svg>
+          <span>AQI Moderate</span>
+        </div>
+      </div>
+      <!-- Tip -->
+      <div style="margin-top:12px;padding:10px 14px;background:rgba(91,142,240,0.06);border-radius:12px;border-left:2px solid rgba(91,142,240,0.3)">
+        <p style="font-size:12px;color:rgba(255,255,255,0.5);line-height:1.55;font-family:var(--fb)"><span style="color:rgba(255,255,255,0.8);font-weight:600">Tip:</span> Bring an umbrella — rain expected after 2 PM along your route.</p>
+      </div>
+    </div>
+
+    <!-- Quick actions -->
+    <div style="display:flex;justify-content:space-around;margin-top:20px">
+      <div class="qa" onclick="goTo('routes')">
+        <div class="qac"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+        <span class="qal">Add Route</span>
+      </div>
+      <div class="qa" onclick="openLog()">
+        <div class="qac" style="background:var(--teal-dim);border-color:var(--teal-border)"><svg viewBox="0 0 24 24" style="stroke:var(--teal)"><path d="M12 5v14M5 12l7-7 7 7"/></svg></div>
+        <span class="qal">Log Ride</span>
+      </div>
+      <div class="qa" onclick="goTo('insights')">
+        <div class="qac"><svg viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></div>
+        <span class="qal">Insights</span>
+      </div>
+      <div class="qa" onclick="goTo('logs')">
+        <div class="qac"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+        <span class="qal">Pipeline</span>
+      </div>
+    </div>
+
+    <!-- Saved routes -->
+    <div style="margin-top:22px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <span style="font-family:var(--fh);font-size:15px;font-weight:800;color:var(--w)">Saved Routes</span>
+        <span style="font-size:13px;color:var(--blue);cursor:pointer;font-weight:600" onclick="goTo('routes')">See all</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:9px">
+        <div class="rc">
+          <div class="ri"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg></div>
+          <div style="flex:1">
+            <div style="font-family:var(--fh);font-size:14px;font-weight:700;color:var(--w)">Home → UP Manila</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px;font-family:var(--fb)">Walking · 3.2 km · Today</div>
+          </div>
+          <div class="badge badge-teal">28 min</div>
+        </div>
+        <div class="rc">
+          <div class="ri" style="background:rgba(62,201,167,0.08)"><svg viewBox="0 0 24 24" style="stroke:#3EC9A7"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
+          <div style="flex:1">
+            <div style="font-family:var(--fh);font-size:14px;font-weight:700;color:var(--w)">Campus → Work</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px;font-family:var(--fb)">Jeep · 5.8 km · Yesterday</div>
+          </div>
+          <div class="badge badge-blue">42 min</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPIs -->
+    <div style="display:flex;gap:9px;margin-top:16px">
+      <div class="mc">
+        <div class="lbl">This Month</div>
+        <div class="mv">14</div>
+        <div class="ms" style="color:var(--teal)">logs recorded</div>
+      </div>
+      <div class="mc">
+        <div class="lbl">Avg Time</div>
+        <div class="mv">31<span style="font-size:14px;font-weight:400;color:rgba(255,255,255,0.3)">m</span></div>
+        <div class="ms" style="color:var(--amber)">↓ 3 min vs last</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── ROUTES ──────────────────────────────── -->
+<div class="page" id="page-routes">
+  <div style="padding:0 20px">
+    <div class="sb"><span class="sb-t">9:41</span><div class="sb-r"><div class="sig"><span></span><span></span><span></span><span></span></div><div class="bat"></div></div></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px">
+      <div style="font-family:var(--fh);font-size:27px;font-weight:900;color:var(--w);letter-spacing:-.4px">My Routes</div>
+      <button onclick="togAR()" style="background:var(--w);color:#050608;border:none;border-radius:100px;padding:9px 16px;font-family:var(--fh);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#050608" stroke-width="2.8"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add
+      </button>
+    </div>
+
+    <!-- Add form -->
+    <div id="arf" style="display:none;margin-top:14px">
+      <div class="gc" style="padding:18px">
+        <div style="font-family:var(--fh);font-size:14px;font-weight:800;color:var(--w);margin-bottom:14px">New Route</div>
+        <div style="display:flex;flex-direction:column;gap:11px">
+          <input class="inp" placeholder="Route name" style="padding:13px 16px;font-size:14px">
+          <div style="display:flex;gap:9px">
+            <input class="inp" placeholder="From" style="padding:13px 16px;font-size:14px;flex:1">
+            <input class="inp" placeholder="To" style="padding:13px 16px;font-size:14px;flex:1">
+          </div>
+          <div>
+            <div class="lbl" style="margin-bottom:8px">Mode</div>
+            <div class="pr">
+              <div class="pl active">Jeep</div>
+              <div class="pl" onclick="selPill(this)">Walk</div>
+              <div class="pl" onclick="selPill(this)">Bike</div>
+              <div class="pl" onclick="selPill(this)">Car</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <label class="tg"><input type="checkbox" checked><div class="tgs"></div></label>
+            <span style="font-size:13px;color:rgba(255,255,255,0.45);font-family:var(--fb)">Mark as favourite</span>
+          </div>
+          <button class="btn-p" style="padding:13px" onclick="togAR()">Save Route</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Route list -->
+    <div style="display:flex;flex-direction:column;gap:9px;margin-top:14px">
+      <div style="background:var(--card);border:1px solid rgba(255,255,255,0.055);border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:13px">
+        <div style="display:flex;align-items:center;gap:13px">
+          <div class="ri"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg></div>
+          <div style="flex:1">
+            <div style="font-family:var(--fh);font-size:14px;font-weight:700;color:var(--w)">Home → UP Manila ★</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px;font-family:var(--fb)">Walking · 3.2 km · Est. 28 min</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button onclick="openLog()" style="flex:1;padding:9px;border-radius:12px;background:var(--teal-dim);border:1px solid var(--teal-border);color:var(--teal);font-family:var(--fh);font-size:12px;font-weight:700;cursor:pointer">Log Ride</button>
+          <button style="flex:1;padding:9px;border-radius:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.4);font-family:var(--fh);font-size:12px;font-weight:600;cursor:pointer">Edit</button>
+        </div>
+      </div>
+      <div style="background:var(--card);border:1px solid rgba(255,255,255,0.055);border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:13px">
+        <div style="display:flex;align-items:center;gap:13px">
+          <div class="ri" style="background:rgba(62,201,167,0.08)"><svg viewBox="0 0 24 24" style="stroke:#3EC9A7"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+          <div style="flex:1">
+            <div style="font-family:var(--fh);font-size:14px;font-weight:700;color:var(--w)">Campus → Work</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px;font-family:var(--fb)">Jeepney · 5.8 km · Est. 42 min</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button onclick="openLog()" style="flex:1;padding:9px;border-radius:12px;background:var(--teal-dim);border:1px solid var(--teal-border);color:var(--teal);font-family:var(--fh);font-size:12px;font-weight:700;cursor:pointer">Log Ride</button>
+          <button style="flex:1;padding:9px;border-radius:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.4);font-family:var(--fh);font-size:12px;font-weight:600;cursor:pointer">Edit</button>
+        </div>
+      </div>
+      <div style="background:var(--card);border:1px solid rgba(255,255,255,0.055);border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:13px">
+        <div style="display:flex;align-items:center;gap:13px">
+          <div class="ri" style="background:rgba(232,168,76,0.08)"><svg viewBox="0 0 24 24" style="stroke:var(--amber)"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg></div>
+          <div style="flex:1">
+            <div style="font-family:var(--fh);font-size:14px;font-weight:700;color:var(--w)">Home → Cubao LRT</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px;font-family:var(--fb)">Tricycle + Train · 9.1 km · Est. 55 min</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button onclick="openLog()" style="flex:1;padding:9px;border-radius:12px;background:var(--teal-dim);border:1px solid var(--teal-border);color:var(--teal);font-family:var(--fh);font-size:12px;font-weight:700;cursor:pointer">Log Ride</button>
+          <button style="flex:1;padding:9px;border-radius:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.4);font-family:var(--fh);font-size:12px;font-weight:600;cursor:pointer">Edit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── INSIGHTS ─────────────────────────────── -->
+<div class="page" id="page-insights">
+  <div style="padding:0 20px">
+    <div class="sb"><span class="sb-t">9:41</span><div class="sb-r"><div class="sig"><span></span><span></span><span></span><span></span></div><div class="bat"></div></div></div>
+    <div style="font-family:var(--fh);font-size:27px;font-weight:900;color:var(--w);letter-spacing:-.4px;margin-top:14px">Insights</div>
+    <p style="font-size:13px;color:rgba(255,255,255,0.35);margin-top:4px;font-family:var(--fb)">Your route history is forming a pattern.</p>
+    <div class="tr" style="margin-top:14px">
+      <button class="tb active" onclick="selTab(this)">Week</button>
+      <button class="tb" onclick="selTab(this)">Month</button>
+      <button class="tb" onclick="selTab(this)">All time</button>
+    </div>
+    <!-- KPIs -->
+    <div style="display:flex;gap:9px;margin-top:14px">
+      <div class="mc"><div class="lbl">Avg Time</div><div class="mv">31<span style="font-size:13px;font-weight:400;color:rgba(255,255,255,0.3)">m</span></div></div>
+      <div class="mc"><div class="lbl">Logs</div><div class="mv">14</div><div class="ms" style="color:rgba(255,255,255,0.35)">this month</div></div>
+      <div class="mc"><div class="lbl">Rating</div><div class="mv">4.2</div><div class="ms" style="color:var(--amber)">avg</div></div>
+    </div>
+    <!-- Duration chart -->
+    <div class="dc" style="margin-top:14px;padding:17px">
+      <div style="font-family:var(--fh);font-size:13px;font-weight:800;color:var(--w);margin-bottom:14px">Duration this week</div>
+      <div class="bc">
+        <div class="bcc"><div class="bar" style="height:44%"></div><div class="bl">M</div></div>
+        <div class="bcc"><div class="bar" style="height:62%"></div><div class="bl">T</div></div>
+        <div class="bcc"><div class="bar act" style="height:82%"></div><div class="bl">W</div></div>
+        <div class="bcc"><div class="bar" style="height:54%"></div><div class="bl">T</div></div>
+        <div class="bcc"><div class="bar" style="height:70%"></div><div class="bl">F</div></div>
+        <div class="bcc"><div class="bar" style="height:33%"></div><div class="bl">S</div></div>
+        <div class="bcc"><div class="bar" style="height:18%"></div><div class="bl">S</div></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px">
+        <span style="font-size:10px;color:rgba(255,255,255,0.2);font-family:var(--fb)">0 min</span>
+        <span style="font-size:10px;color:rgba(255,255,255,0.2);font-family:var(--fb)">60 min</span>
+      </div>
+    </div>
+    <!-- Route + Crowd -->
+    <div style="display:flex;gap:9px;margin-top:12px">
+      <div class="dc" style="padding:15px;flex:1">
+        <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.3);font-family:var(--fb);letter-spacing:.5px;text-transform:uppercase;margin-bottom:12px">Top Route</div>
+        <div class="dw" style="margin:0 auto">
+          <svg width="76" height="76" viewBox="0 0 76 76">
+            <circle cx="38" cy="38" r="28" fill="transparent" stroke="rgba(255,255,255,0.05)" stroke-width="9"/>
+            <circle cx="38" cy="38" r="28" fill="transparent" stroke="var(--blue)" stroke-width="9" stroke-dasharray="105 72" stroke-linecap="round"/>
+          </svg>
+          <div class="dc2">60%</div>
+        </div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:10px;text-align:center;font-family:var(--fb)">Home → Campus</div>
+      </div>
+      <div class="dc" style="padding:15px;flex:1">
+        <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.3);font-family:var(--fb);letter-spacing:.5px;text-transform:uppercase;margin-bottom:12px">Crowd</div>
+        <div style="display:flex;flex-direction:column;gap:9px">
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+              <span style="font-size:11px;color:rgba(255,255,255,0.4);font-family:var(--fb)">Light</span>
+              <span style="font-size:11px;color:var(--teal);font-weight:600;font-family:var(--fb)">30%</span>
+            </div>
+            <div style="height:4px;background:rgba(255,255,255,0.05);border-radius:2px"><div style="height:100%;width:30%;background:var(--teal);border-radius:2px;opacity:.7"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+              <span style="font-size:11px;color:rgba(255,255,255,0.4);font-family:var(--fb)">Moderate</span>
+              <span style="font-size:11px;color:var(--amber);font-weight:600;font-family:var(--fb)">45%</span>
+            </div>
+            <div style="height:4px;background:rgba(255,255,255,0.05);border-radius:2px"><div style="height:100%;width:45%;background:var(--amber);border-radius:2px;opacity:.7"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+              <span style="font-size:11px;color:rgba(255,255,255,0.4);font-family:var(--fb)">Crowded</span>
+              <span style="font-size:11px;color:var(--red);font-weight:600;font-family:var(--fb)">25%</span>
+            </div>
+            <div style="height:4px;background:rgba(255,255,255,0.05);border-radius:2px"><div style="height:100%;width:25%;background:var(--red);border-radius:2px;opacity:.6"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Recent logs -->
+    <div style="margin-top:16px">
+      <div style="font-family:var(--fh);font-size:13px;font-weight:800;color:var(--w);margin-bottom:11px">Recent Logs</div>
+      <div style="display:flex;flex-direction:column;gap:9px">
+        <div style="background:var(--card);border:1px solid rgba(255,255,255,0.055);border-radius:17px;padding:14px 16px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div>
+              <div style="font-family:var(--fh);font-size:13px;font-weight:700;color:var(--w)">Home → UP Manila</div>
+              <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px;font-family:var(--fb)">Today · 28 min · Light crowd</div>
+            </div>
+            <div style="display:flex;gap:1.5px">
+              <svg class="str" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01z"/></svg>
+              <svg class="str" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01z"/></svg>
+              <svg class="str" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01z"/></svg>
+              <svg class="str" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01z"/></svg>
+              <svg class="str e" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01z" stroke="var(--amber)" stroke-width="1.5"/></svg>
+            </div>
+          </div>
+        </div>
+        <div style="background:var(--card);border:1px solid rgba(255,255,255,0.055);border-radius:17px;padding:14px 16px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div>
+              <div style="font-family:var(--fh);font-size:13px;font-weight:700;color:var(--w)">Campus → Work</div>
+              <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px;font-family:var(--fb)">Yesterday · 48 min · Crowded</div>
+            </div>
+            <div style="display:flex;gap:1.5px">
+              <svg class="str" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01z"/></svg>
+              <svg class="str" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01z"/></svg>
+              <svg class="str" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01z"/></svg>
+              <svg class="str e" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01z" stroke="var(--amber)" stroke-width="1.5"/></svg>
+              <svg class="str e" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01z" stroke="var(--amber)" stroke-width="1.5"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PIPELINE ─────────────────────────────── -->
+<div class="page" id="page-logs">
+  <div style="padding:0 20px">
+    <div class="sb"><span class="sb-t">9:41</span><div class="sb-r"><div class="sig"><span></span><span></span><span></span><span></span></div><div class="bat"></div></div></div>
+    <div style="font-family:var(--fh);font-size:27px;font-weight:900;color:var(--w);letter-spacing:-.4px;margin-top:14px">Pipeline</div>
+    <p style="font-size:13px;color:rgba(255,255,255,0.35);margin-top:4px;font-family:var(--fb)">Data freshness · Last run 6:00 AM</p>
+    <div style="display:flex;gap:9px;margin-top:14px">
+      <div class="mc"><div class="lbl">Sources</div><div class="mv" style="font-size:22px">4</div></div>
+      <div class="mc"><div class="lbl">Success</div><div class="mv" style="font-size:22px;color:var(--teal)">3</div></div>
+      <div class="mc"><div class="lbl">Rows</div><div class="mv" style="font-size:22px">847</div></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:9px;margin-top:16px">
+      <div style="background:var(--card);border:1px solid rgba(255,255,255,0.055);border-radius:18px;padding:14px 16px;display:flex;gap:12px">
+        <div class="ld" style="background:var(--teal)"></div>
+        <div style="flex:1">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-family:var(--fh);font-size:13px;font-weight:700;color:var(--w)">open_meteo_weather</div>
+            <div class="badge badge-teal">Success</div>
+          </div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:4px;font-family:var(--fb)">3 rows · Today, 6:00 AM</div>
+        </div>
+      </div>
+      <div style="background:var(--card);border:1px solid rgba(255,255,255,0.055);border-radius:18px;padding:14px 16px;display:flex;gap:12px">
+        <div class="ld" style="background:var(--teal)"></div>
+        <div style="flex:1">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-family:var(--fh);font-size:13px;font-weight:700;color:var(--w)">openaq_air_quality</div>
+            <div class="badge badge-teal">Success</div>
+          </div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:4px;font-family:var(--fb)">12 rows · Today, 6:02 AM</div>
+        </div>
+      </div>
+      <div style="background:var(--card);border:1px solid rgba(255,255,255,0.055);border-radius:18px;padding:14px 16px;display:flex;gap:12px">
+        <div class="ld" style="background:var(--amber)"></div>
+        <div style="flex:1">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-family:var(--fh);font-size:13px;font-weight:700;color:var(--w)">gtfs_route_snapshot</div>
+            <div class="badge badge-amber">Partial</div>
+          </div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:4px;font-family:var(--fb)">832 rows · Today, 6:04 AM</div>
+          <div style="font-size:11px;color:var(--amber);margin-top:3px;font-family:var(--fb)">2 routes skipped (missing shapes)</div>
+        </div>
+      </div>
+      <div style="background:var(--card);border:1px solid rgba(255,255,255,0.055);border-radius:18px;padding:14px 16px;display:flex;gap:12px">
+        <div class="ld" style="background:var(--red)"></div>
+        <div style="flex:1">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-family:var(--fh);font-size:13px;font-weight:700;color:var(--w)">mmda_traffic_feed</div>
+            <div class="badge badge-red">Failed</div>
+          </div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:4px;font-family:var(--fb)">0 rows · Today, 6:05 AM</div>
+          <div style="font-size:11px;color:var(--red);margin-top:3px;font-family:var(--fb)">Connection timeout after 30s</div>
+        </div>
+      </div>
+    </div>
+    <button class="btn-s" style="margin-top:18px;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+      Retry Failed Sources
+    </button>
+  </div>
+</div>
+
+<!-- ── BOTTOM NAV ──────────────────────────── -->
+<div class="bnav" id="bnav" style="display:none">
+  <button class="ni" onclick="goTo('dashboard')" id="nv-dash">
+    <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+    <span class="nl">Home</span>
+  </button>
+  <button class="ni" onclick="goTo('routes')" id="nv-routes">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M16.24 7.76a6 6 0 010 8.49m-8.48-.01a6 6 0 010-8.49m11.31-2.82a10 10 0 010 14.14m-14.14 0a10 10 0 010-14.14"/></svg>
+    <span class="nl">Routes</span>
+  </button>
+  <button class="ni nc" onclick="openLog()">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  </button>
+  <button class="ni" onclick="goTo('insights')" id="nv-insights">
+    <svg viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+    <span class="nl">Insights</span>
+  </button>
+  <button class="ni" onclick="goTo('logs')" id="nv-logs">
+    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    <span class="nl">Pipeline</span>
+  </button>
+</div>
+
+<!-- ── LOG MODAL ───────────────────────────── -->
+<div id="lmod" style="position:absolute;inset:0;background:rgba(5,6,8,0.88);z-index:80;display:none;align-items:flex-end">
+  <div style="background:var(--card);border:1px solid rgba(255,255,255,0.08);border-radius:28px 28px 0 0;padding:22px;width:100%">
+    <div style="width:36px;height:3.5px;background:rgba(255,255,255,0.12);border-radius:2px;margin:0 auto 18px"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <div style="font-family:var(--fh);font-size:17px;font-weight:800;color:var(--w)">Log a Commute</div>
+      <button onclick="closeLog()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.09);border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:13px">
+      <div>
+        <div class="lbl" style="margin-bottom:7px">Route</div>
+        <select class="inp" style="-webkit-appearance:none;font-size:14px;padding:13px 16px">
+          <option style="background:#111419">Home to UP Manila</option>
+          <option style="background:#111419">Campus to Work</option>
+          <option style="background:#111419">Home to Cubao LRT</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:9px">
+        <div style="flex:1">
+          <div class="lbl" style="margin-bottom:7px">Date</div>
+          <input class="inp" type="date" style="font-size:14px;padding:13px 16px">
+        </div>
+        <div style="flex:1">
+          <div class="lbl" style="margin-bottom:7px">Duration (min)</div>
+          <input class="inp" type="number" placeholder="28" style="font-size:14px;padding:13px 16px">
+        </div>
+      </div>
+      <div>
+        <div class="lbl" style="margin-bottom:8px">Crowd Level</div>
+        <div class="pr">
+          <div class="pl active">Light</div>
+          <div class="pl" onclick="selPill(this)">Moderate</div>
+          <div class="pl" onclick="selPill(this)">Crowded</div>
+          <div class="pl" onclick="selPill(this)">Very crowded</div>
+        </div>
+      </div>
+      <div>
+        <div class="lbl" style="margin-bottom:8px">Rating</div>
+        <div id="rs" style="display:flex;gap:7px">
+          <span data-v="1" onclick="setR(1)" style="font-size:22px;cursor:pointer;opacity:.25">★</span>
+          <span data-v="2" onclick="setR(2)" style="font-size:22px;cursor:pointer;opacity:.25">★</span>
+          <span data-v="3" onclick="setR(3)" style="font-size:22px;cursor:pointer;opacity:.25">★</span>
+          <span data-v="4" onclick="setR(4)" style="font-size:22px;cursor:pointer;opacity:.25">★</span>
+          <span data-v="5" onclick="setR(5)" style="font-size:22px;cursor:pointer;opacity:.25">★</span>
+        </div>
+      </div>
+      <textarea class="inp" rows="2" placeholder="Notes about this ride…" style="resize:none;font-size:14px;padding:13px 16px;font-family:var(--fb)"></textarea>
+      <button class="btn-p" onclick="closeLog()" style="padding:14px">Save Log</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- /screen -->
+</div><!-- /phone -->
+
+<script>
+const pm={land:'page-land',login:'page-login',signup:'page-signup',dashboard:'page-dashboard',routes:'page-routes',insights:'page-insights',logs:'page-logs'};
+const nm={dashboard:'nv-dash',routes:'nv-routes',insights:'nv-insights',logs:'nv-logs'};
+const np=['dashboard','routes','insights','logs'];
+let cur='land';
+
+function goTo(id){
+  document.getElementById(pm[cur]).classList.remove('active');
+  document.getElementById(pm[id]).classList.add('active');
+  const bn=document.getElementById('bnav');
+  bn.style.display=np.includes(id)?'flex':'none';
+  Object.values(nm).forEach(n=>document.getElementById(n).classList.remove('active'));
+  if(nm[id])document.getElementById(nm[id]).classList.add('active');
+  cur=id;
+  document.getElementById(pm[id]).scrollTop=0;
+}
+
+let suc=1;
+function suStep(n){
+  document.getElementById('ss'+suc).style.display='none';
+  document.getElementById('ss'+n).style.display='block';
+  document.querySelectorAll('.sd').forEach((d,i)=>d.classList.toggle('active',i<n));
+  suc=n;
+}
+
+function togAR(){
+  const f=document.getElementById('arf');
+  f.style.display=f.style.display==='none'?'block':'none';
+}
+
+function openLog(){const m=document.getElementById('lmod');m.style.display='flex'}
+function closeLog(){document.getElementById('lmod').style.display='none'}
+
+function selPill(el){
+  el.parentElement.querySelectorAll('.pl').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+}
+function selTab(el){
+  el.parentElement.querySelectorAll('.tb').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+}
+function setR(v){
+  document.querySelectorAll('#rs span').forEach(s=>{
+    s.style.opacity=parseInt(s.dataset.v)<=v?'1':'0.2';
+    s.style.color=parseInt(s.dataset.v)<=v?'var(--amber)':'rgba(255,255,255,0.3)';
+  });
+}
+</script>
+</body>
+</html>

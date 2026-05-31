@@ -1,0 +1,109 @@
+import Link from "next/link";
+import { ArrowRight, BarChart3, Database, MapPinned, Route } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { GlassCard } from "@/components/ui-custom/glass-card";
+import { DarkCard } from "@/components/ui-custom/dark-card";
+import { RouteArt } from "@/components/commute/route-art";
+
+const features = [
+  { title: "Save daily routes", body: "Keep school, internship, and work commutes in one clean route library.", icon: Route },
+  { title: "Log each ride", body: "Capture actual duration, crowd level, rating, and notes from the trip.", icon: MapPinned },
+  { title: "Understand patterns", body: "Turn commute history into simple trends for better timing decisions.", icon: BarChart3 }
+];
+
+export default function LandingPage() {
+  return (
+    <main className="relative min-h-screen overflow-hidden bg-bg text-white">
+      <div className="route-grid absolute inset-0 opacity-50" />
+      <div className="relative mx-auto flex min-h-screen max-w-7xl flex-col px-5 py-6 lg:px-8">
+        <nav className="flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-3">
+            <span className="flex size-10 items-center justify-center rounded-[14px] bg-blue">
+              <MapPinned className="size-5 text-white" />
+            </span>
+            <span>
+              <span className="block font-heading text-lg font-black">LakbayLoop</span>
+              <span className="block text-xs text-white/38">Plan. Log. Learn your commute.</span>
+            </span>
+          </Link>
+          <div className="hidden items-center gap-2 sm:flex">
+            <Button asChild variant="secondary" className="hidden sm:inline-flex">
+              <Link href="/auth/login">Log in</Link>
+            </Button>
+            <Button asChild>
+              <Link href="/auth/signup">Create account</Link>
+            </Button>
+          </div>
+        </nav>
+
+        <section className="grid flex-1 items-center gap-10 py-12 lg:grid-cols-[1fr_0.95fr] lg:py-16">
+          <div className="max-w-2xl">
+            <p className="mb-5 inline-flex rounded-full border border-[var(--blue-border)] bg-[var(--blue-soft)] px-4 py-2 text-sm font-semibold text-blue">
+              Premium commute intelligence for students and young professionals
+            </p>
+            <h1 className="font-heading text-5xl font-black leading-[0.95] tracking-normal text-white sm:text-6xl lg:text-7xl">
+              Your commute, ready before you leave.
+            </h1>
+            <p className="mt-6 max-w-xl text-lg leading-8 text-white/65">
+              Save routes, check conditions, log your ride, and understand your patterns over time.
+            </p>
+            <div className="mt-8 grid gap-3 sm:flex">
+              <Button size="lg" className="w-full sm:w-auto" asChild>
+                <Link href="/auth/signup">
+                  Create account
+                  <ArrowRight className="size-5" />
+                </Link>
+              </Button>
+              <Button size="lg" variant="secondary" className="w-full sm:w-auto" asChild>
+                <Link href="/auth/login">Log in</Link>
+              </Button>
+            </div>
+          </div>
+
+          <GlassCard className="relative min-h-[420px] overflow-hidden p-6 shadow-glow">
+            <RouteArt />
+            <div className="absolute bottom-5 left-5 right-5 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-2xl border border-white/10 bg-bg/70 p-4 backdrop-blur-xl">
+                <p className="text-xs text-white/38">Estimated</p>
+                <p className="font-heading text-2xl font-black">28m</p>
+              </div>
+              <div className="rounded-2xl border border-[var(--amber-border)] bg-bg/70 p-4 backdrop-blur-xl">
+                <p className="text-xs text-white/38">Rain</p>
+                <p className="font-heading text-2xl font-black text-amber">40%</p>
+              </div>
+              <div className="rounded-2xl border border-[var(--teal-border)] bg-bg/70 p-4 backdrop-blur-xl">
+                <p className="text-xs text-white/38">Logs</p>
+                <p className="font-heading text-2xl font-black text-teal">18</p>
+              </div>
+            </div>
+          </GlassCard>
+        </section>
+
+        <section className="grid gap-3 pb-8 md:grid-cols-3">
+          {features.map((feature) => (
+            <DarkCard key={feature.title} className="p-5">
+              <feature.icon className="size-6 text-blue" />
+              <h2 className="mt-4 font-heading text-lg font-black">{feature.title}</h2>
+              <p className="mt-2 text-sm leading-6 text-white/55">{feature.body}</p>
+            </DarkCard>
+          ))}
+        </section>
+
+        <section className="mb-8 rounded-[24px] border border-white/[0.065] bg-white/[0.035] p-5">
+          <div className="flex flex-wrap items-center gap-3 text-sm font-semibold text-white/62">
+            <Database className="size-5 text-teal" />
+            <span>Free APIs</span>
+            <span className="text-white/22">-&gt;</span>
+            <span>Vercel Cron</span>
+            <span className="text-white/22">-&gt;</span>
+            <span>Raw storage</span>
+            <span className="text-white/22">-&gt;</span>
+            <span>Transforms</span>
+            <span className="text-white/22">-&gt;</span>
+            <span>Supabase analytics</span>
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}
