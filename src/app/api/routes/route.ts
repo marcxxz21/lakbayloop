@@ -44,7 +44,15 @@ export async function POST(request: Request) {
   const sessionId = await getRequestSessionId(request);
   const supabase = getSupabaseDataClient(sessionId);
   const body = routeSchema.parse(await request.json());
-  const distanceKm = calculateDistanceKm(body.origin_lat, body.origin_lng, body.destination_lat, body.destination_lng);
+
+  const origin = await resolveCoordinates(body.origin_name, body.origin_lat, body.origin_lng);
+  const destination = await resolveCoordinates(body.destination_name, body.destination_lat, body.destination_lng);
+
+  if (!origin || !destination) {
+    return NextResponse.json({ error: "Choose a specific start point and end point from address search." }, { status: 422 });
+  }
+
+  const distanceKm = calculateDistanceKm(origin.latitude, origin.longitude, destination.latitude, destination.longitude);
   const estimated = estimateMinutes(distanceKm, body.preferred_mode as PreferredMode);
 
   const { data, error } = await supabase
@@ -52,6 +60,10 @@ export async function POST(request: Request) {
     .insert({
       ...body,
       session_id: sessionId,
+      origin_lat: origin.latitude,
+      origin_lng: origin.longitude,
+      destination_lat: destination.latitude,
+      destination_lng: destination.longitude,
       distance_km: distanceKm,
       estimated_minutes: estimated
     })
@@ -61,4 +73,39 @@ export async function POST(request: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   return NextResponse.json({ route: data }, { status: 201 });
+}
+
+async function resolveCoordinates(name: string, latitude?: number | null, longitude?: number | null) {
+  if (typeof latitude === "number" && typeof longitude === "number" && !Number.isNaN(latitude) && !Number.isNaN(longitude)) {
+    return { latitude, longitude };
+  }
+
+  if (name.trim().length < 3) return null;
+
+  try {
+    const baseUrl = process.env.NOMINATIM_SEARCH_URL ?? "https://nominatim.openstreetmap.org/search";
+    const url = new URL(baseUrl);
+    url.searchParams.set("q", name);
+    url.searchParams.set("format", "jsonv2");
+    url.searchParams.set("limit", "1");
+    url.searchParams.set("countrycodes", process.env.NOMINATIM_COUNTRYCODES ?? "ph");
+
+    const response = await fetch(url, {
+      headers: {
+        "Accept-Language": "en",
+        "User-Agent": "LakbayLoop/0.1 route-create"
+      }
+    });
+    if (!response.ok) return null;
+
+    const [first] = (await response.json()) as Array<{ lat: string; lon: string }>;
+    if (!first) return null;
+
+    return {
+      latitude: Number(first.lat),
+      longitude: Number(first.lon)
+    };
+  } catch {
+    return null;
+  }
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Filter } from "lucide-react";
 import { AddRouteForm } from "@/components/commute/add-route-form";
 import { RouteCard } from "@/components/commute/route-card";
@@ -13,8 +14,9 @@ import { apiFetch } from "@/lib/api-client";
 import type { SavedRoute } from "@/lib/types";
 
 export function RoutesPageClient() {
+  const searchParams = useSearchParams();
   const [routes, setRoutes] = useState<SavedRoute[]>([]);
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(searchParams.get("q") ?? "");
   const [selected, setSelected] = useState<SavedRoute | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,6 +39,10 @@ export function RoutesPageClient() {
     const timeout = window.setTimeout(() => loadRoutes(query), 250);
     return () => window.clearTimeout(timeout);
   }, [query]);
+
+  useEffect(() => {
+    setQuery(searchParams.get("q") ?? "");
+  }, [searchParams]);
 
   const mobile = useMemo(() => (
     <div className="space-y-5">

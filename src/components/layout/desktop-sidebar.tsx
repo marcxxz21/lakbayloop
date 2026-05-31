@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import { BarChart3, Database, Home, MapPinned, Navigation, PlusCircle, Route, Settings } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
+import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
-import { mockUser } from "@/lib/mock-data";
+import type { AppUser } from "@/lib/types";
 
 const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: Home },
@@ -19,6 +21,24 @@ const navItems = [
 
 export function DesktopSidebar() {
   const pathname = usePathname();
+  const [user, setUser] = useState<AppUser | null>(null);
+
+  useEffect(() => {
+    apiFetch<{ user: AppUser | null }>("/api/profile")
+      .then(({ user }) => setUser(user))
+      .catch(() => setUser(null));
+  }, [pathname]);
+
+  const displayName = user?.full_name ?? "LakbayLoop";
+  const workplace = user?.school_or_workplace ?? "Commute workspace";
+  const initials = useMemo(() => {
+    return displayName
+      .split(" ")
+      .map((part) => part[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+  }, [displayName]);
 
   return (
     <aside className="hidden h-screen w-[272px] shrink-0 flex-col border-r border-white/[0.06] bg-[#0B0E14]/92 backdrop-blur-2xl lg:flex">
@@ -64,10 +84,10 @@ export function DesktopSidebar() {
 
       <div className="border-t border-white/[0.05] p-3">
         <div className="flex items-center gap-3 rounded-2xl p-3 transition hover:bg-white/[0.04]">
-          <Avatar initials={mockUser.initials} />
+          <Avatar initials={initials || "LL"} />
           <div className="min-w-0">
-            <p className="truncate font-heading text-sm font-bold text-white">{mockUser.name}</p>
-            <p className="truncate text-xs text-white/32">{mockUser.schoolOrWorkplace}</p>
+            <p className="truncate font-heading text-sm font-bold text-white">{displayName}</p>
+            <p className="truncate text-xs text-white/32">{workplace}</p>
           </div>
         </div>
       </div>

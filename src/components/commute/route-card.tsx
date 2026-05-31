@@ -45,6 +45,9 @@ export function RouteCard({
           </div>
           <p className="mt-1 flex items-center gap-1 truncate text-xs text-white/42">
             <MapPin className="size-3.5" />
+            {route.origin_name} &gt; {route.destination_name}
+          </p>
+          <p className="mt-1 truncate text-xs text-white/32">
             {route.preferred_mode} · {route.distance_km} km · last log {route.latest_log ?? "No logs yet"}
           </p>
         </div>

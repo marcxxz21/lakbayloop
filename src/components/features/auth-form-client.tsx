@@ -17,31 +17,61 @@ export function LoginFormClient() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [canReset, setCanReset] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
     setLoading(true);
     setError(null);
+    setMessage(null);
+    setCanReset(false);
     try {
       const supabase = createClient();
-      const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+      const normalizedEmail = email.trim().toLowerCase();
+      const { data, error: authError } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password });
       if (authError) throw authError;
       if (!data.user) throw new Error("Login did not return a Supabase user.");
 
       setBrowserSessionId(data.user.id);
-      await apiFetch("/api/profile", {
-        method: "POST",
-        body: JSON.stringify({
-          full_name: data.user.user_metadata?.full_name || email.split("@")[0],
-          email,
-          school_or_workplace: data.user.user_metadata?.school_or_workplace || "Not set",
-          preferred_mode: (data.user.user_metadata?.preferred_mode as PreferredMode | undefined) || "Mixed"
-        })
-      });
+      const profile = await apiFetch<{ user: unknown | null }>("/api/profile");
+      if (!profile.user) {
+        await apiFetch("/api/profile", {
+          method: "POST",
+          body: JSON.stringify({
+            full_name: data.user.user_metadata?.full_name || normalizedEmail.split("@")[0],
+            email: normalizedEmail,
+            school_or_workplace: data.user.user_metadata?.school_or_workplace || "Not set",
+            preferred_mode: (data.user.user_metadata?.preferred_mode as PreferredMode | undefined) || "Mixed"
+          })
+        });
+      }
       window.location.href = "/dashboard";
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to log in");
+      const message = err instanceof Error ? err.message : "Unable to log in";
+      setError(message);
+      setCanReset(message.toLowerCase().includes("invalid"));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function sendPasswordReset() {
+    setLoading(true);
+    setError(null);
+    setMessage(null);
+    try {
+      const supabase = createClient();
+      const normalizedEmail = email.trim().toLowerCase();
+      const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+        redirectTo: `${window.location.origin}/auth/reset`
+      });
+      if (error) throw error;
+      setMessage("Password reset email sent. Use it to set a fresh password, then log in again.");
+      setCanReset(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to send password reset");
     } finally {
       setLoading(false);
     }
@@ -57,18 +87,24 @@ export function LoginFormClient() {
       <form className="space-y-5" onSubmit={submit}>
         <div>
           <Label>Email</Label>
-          <Input className="mt-2" type="email" placeholder="josie@example.com" value={email} onChange={(event) => setEmail(event.target.value)} required />
+          <Input className="mt-2" type="email" placeholder="you@example.com" value={email} onChange={(event) => setEmail(event.target.value)} required />
         </div>
         <div>
           <Label>Password</Label>
           <Input className="mt-2" type="password" placeholder="Password" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={6} />
         </div>
         {error ? <p className="rounded-2xl border border-[var(--red-border)] bg-[var(--red-soft)] p-3 text-sm text-red">{error}</p> : null}
+        {message ? <p className="rounded-2xl border border-[var(--teal-border)] bg-[var(--teal-soft)] p-3 text-sm text-teal">{message}</p> : null}
         <Button className="w-full" disabled={loading}>
           <Mail className="size-4" />
           {loading ? "Opening..." : "Log in"}
         </Button>
       </form>
+      {canReset ? (
+        <Button type="button" variant="secondary" className="w-full" onClick={sendPasswordReset} disabled={loading || !email.trim()}>
+          Send password reset
+        </Button>
+      ) : null}
       <Button type="button" variant="secondary" className="w-full" onClick={continueDemo}>Continue in demo mode</Button>
     </div>
   );
@@ -81,16 +117,19 @@ export function SignupFormClient() {
   const [school, setSchool] = useState("");
   const [mode, setMode] = useState<PreferredMode>("Jeepney");
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
     setLoading(true);
     setError(null);
+    setMessage(null);
     try {
       const supabase = createClient();
+      const normalizedEmail = email.trim().toLowerCase();
       const { data, error: authError } = await supabase.auth.signUp({
-        email,
+        email: normalizedEmail,
         password,
         options: {
           data: {
@@ -102,13 +141,17 @@ export function SignupFormClient() {
       });
       if (authError) throw authError;
       if (!data.user) throw new Error("Signup did not return a Supabase user.");
+      if (!data.session) {
+        setMessage("Account request received. Check your email to confirm the account, then log in.");
+        return;
+      }
 
       setBrowserSessionId(data.user.id);
       await apiFetch("/api/profile", {
         method: "POST",
         body: JSON.stringify({
           full_name: fullName,
-          email,
+          email: normalizedEmail,
           school_or_workplace: school,
           preferred_mode: mode
         })
@@ -155,10 +198,48 @@ export function SignupFormClient() {
         </div>
       </div>
       {error ? <p className="rounded-2xl border border-[var(--red-border)] bg-[var(--red-soft)] p-3 text-sm text-red md:col-span-2">{error}</p> : null}
+      {message ? <p className="rounded-2xl border border-[var(--teal-border)] bg-[var(--teal-soft)] p-3 text-sm text-teal md:col-span-2">{message}</p> : null}
       <Button className="mt-3 w-full md:col-span-2" disabled={loading}>{loading ? "Creating..." : "Create account"}</Button>
       <p className="text-center text-sm text-white/45 md:col-span-2">
         Already have an account? <Link className="font-semibold text-blue" href="/auth/login">Log in</Link>
       </p>
+    </form>
+  );
+}
+
+export function ResetPasswordFormClient() {
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      const supabase = createClient();
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) throw new Error("Open this page from the password reset email first.");
+
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw error;
+      window.location.href = "/dashboard";
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to update password");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <form className="mt-8 space-y-5" onSubmit={submit}>
+      <div>
+        <Label>New password</Label>
+        <Input className="mt-2" type="password" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={6} />
+      </div>
+      {error ? <p className="rounded-2xl border border-[var(--red-border)] bg-[var(--red-soft)] p-3 text-sm text-red">{error}</p> : null}
+      <Button className="w-full" disabled={loading}>{loading ? "Saving..." : "Update password"}</Button>
     </form>
   );
 }
