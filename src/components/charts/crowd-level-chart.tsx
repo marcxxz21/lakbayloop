@@ -7,7 +7,7 @@ import { crowdLevelSeries } from "@/lib/mock-data";
 
 const colors = ["#3EC9A7", "#5B8EF0", "#E8A84C", "#E05C5C"];
 
-export function CrowdLevelChart() {
+export function CrowdLevelChart({ data = crowdLevelSeries }: { data?: { level: string; value: number }[] }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -16,8 +16,8 @@ export function CrowdLevelChart() {
       {mounted ? <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Tooltip contentStyle={{ background: "#111419", border: "1px solid rgba(255,255,255,.1)", borderRadius: 14, color: "white" }} />
-          <Pie data={crowdLevelSeries} dataKey="value" nameKey="level" innerRadius={58} outerRadius={92} paddingAngle={4}>
-            {crowdLevelSeries.map((entry, index) => <Cell key={entry.level} fill={colors[index % colors.length]} />)}
+          <Pie data={data} dataKey="value" nameKey="level" innerRadius={58} outerRadius={92} paddingAngle={4}>
+            {data.map((entry, index) => <Cell key={entry.level} fill={colors[index % colors.length]} />)}
           </Pie>
         </PieChart>
       </ResponsiveContainer> : <div className="h-full rounded-2xl bg-white/[0.035]" />}

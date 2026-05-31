@@ -15,8 +15,10 @@ LakbayLoop is a responsive daily commute intelligence app for students and young
 - Responsive landing, login, signup, dashboard, routes, insights, and pipeline logs pages.
 - Mobile app shell with floating bottom navigation.
 - Desktop dashboard shell with fixed sidebar, topbar, KPI grid, route panels, charts, and pipeline table.
-- Mock route cards, ride logs, weather, air quality, insights, and pipeline freshness data.
-- Backend-ready folders for API extraction, transform logic, and Supabase clients.
+- Supabase-backed profile, saved routes, route logs, insights, and pipeline freshness data.
+- Working add route, search routes, favorite route, log ride, and API refresh flows.
+- API routes for `/api/profile`, `/api/routes`, `/api/logs`, `/api/dashboard`, `/api/insights`, and `/api/pipeline`.
+- Pipeline refresh calls Open-Meteo Weather, Open-Meteo Air Quality, and OSRM, stores raw responses, transforms clean rows, and logs observability records.
 
 ## Tech Stack
 
@@ -75,14 +77,16 @@ Dashboard Analytics
 
 ## Planned Database Schema
 
-- `profiles`
-- `saved_routes`
-- `route_logs`
-- `weather_daily`
-- `air_quality_daily`
-- `route_snapshots`
-- `raw_api_responses`
-- `pipeline_logs`
+- `ll_app_users`
+- `ll_saved_routes`
+- `ll_route_logs`
+- `ll_weather_daily`
+- `ll_air_quality_daily`
+- `ll_route_snapshots`
+- `ll_raw_api_responses`
+- `ll_pipeline_logs`
+
+The `ll_` prefix keeps LakbayLoop isolated from other tables in the shared Supabase project. RLS is enabled and scoped by the `x-lakbayloop-session` request header for the current demo session. Production auth should replace this with `auth.uid()` ownership policies.
 
 ## Planned APIs
 
@@ -110,9 +114,7 @@ npm run build
 
 ## Environment Variables
 
-The current UI uses mock data and does not require environment variables.
-
-When Supabase integration begins, add:
+Add these locally in `.env.local`:
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=
@@ -120,7 +122,7 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 ```
 
-Use the service role key only on the server.
+The current app only requires `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Use `SUPABASE_SERVICE_ROLE_KEY` only on the server if admin-only jobs are added later.
 
 ## Deployment
 
@@ -134,12 +136,11 @@ Then connect the repository in Vercel or push to the configured GitHub remote.
 
 ## Future Improvements
 
-- Connect login and signup to Supabase Auth.
-- Create Supabase tables, RLS policies, and generated TypeScript database types.
-- Add Next.js route handlers for public API extraction.
+- Replace demo profile login with full Supabase Auth.
+- Generate TypeScript database types from Supabase.
 - Add Vercel Cron for scheduled weather, air quality, and OSRM refreshes.
-- Store raw API responses before transformation.
-- Replace mock data with Supabase queries and chart aggregations.
+- Tighten RLS from session-header demo scoping to authenticated user ownership.
+- Add edit route and delete log UI controls.
 
 ## Screenshots
 

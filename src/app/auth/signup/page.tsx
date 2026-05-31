@@ -1,9 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft, MapPinned } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { preferredModes } from "@/lib/constants";
+import { SignupFormClient } from "@/components/features/auth-form-client";
 
 export default function SignupPage() {
   return (
@@ -26,34 +23,7 @@ export default function SignupPage() {
           </p>
         </section>
         <section className="rounded-[28px] border border-white/[0.08] bg-surface p-5 shadow-panel sm:p-7">
-          <form className="grid gap-5 md:grid-cols-2">
-            {["Full name", "Email", "Password", "School or workplace"].map((field) => (
-              <div key={field}>
-                <Label>{field}</Label>
-                <Input className="mt-2" type={field === "Password" ? "password" : field === "Email" ? "email" : "text"} placeholder={field} />
-              </div>
-            ))}
-            <div className="md:col-span-2">
-              <Label>Preferred commute mode</Label>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {preferredModes.map((mode, index) => (
-                  <button
-                    key={mode}
-                    type="button"
-                    className={`rounded-full border px-4 py-2 text-sm ${index === 1 ? "border-[var(--blue-border)] bg-[var(--blue-soft)] text-blue" : "border-white/10 bg-white/[0.04] text-white/45"}`}
-                  >
-                    {mode}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <Button className="mt-3 w-full md:col-span-2" asChild>
-              <Link href="/dashboard">Create account</Link>
-            </Button>
-          </form>
-          <p className="mt-6 text-center text-sm text-white/45">
-            Already have an account? <Link className="font-semibold text-blue" href="/auth/login">Log in</Link>
-          </p>
+          <SignupFormClient />
         </section>
       </div>
     </main>

@@ -1,10 +1,8 @@
 import Link from "next/link";
-import { ArrowLeft, Mail, MapPinned } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { ArrowLeft, MapPinned } from "lucide-react";
 import { GlassCard } from "@/components/ui-custom/glass-card";
 import { RouteArt } from "@/components/commute/route-art";
+import { LoginFormClient } from "@/components/features/auth-form-client";
 
 export default function LoginPage() {
   return (
@@ -32,22 +30,7 @@ export default function LoginPage() {
           </Link>
           <h2 className="font-heading text-4xl font-black">Log in</h2>
           <p className="mt-3 text-white/55">Open your saved routes, ride logs, and mobility insights.</p>
-          <form className="mt-8 space-y-5">
-            <div>
-              <Label>Email</Label>
-              <Input className="mt-2" type="email" placeholder="josie@example.com" />
-            </div>
-            <div>
-              <Label>Password</Label>
-              <Input className="mt-2" type="password" placeholder="••••••••" />
-            </div>
-            <Button className="w-full" asChild>
-              <Link href="/dashboard">
-                <Mail className="size-4" />
-                Log in
-              </Link>
-            </Button>
-          </form>
+          <LoginFormClient />
           <p className="mt-6 text-center text-sm text-white/45">
             No account? <Link className="font-semibold text-blue" href="/auth/signup">Sign up</Link>
           </p>

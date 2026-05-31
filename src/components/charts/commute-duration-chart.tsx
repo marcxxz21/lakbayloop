@@ -5,14 +5,14 @@ import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YA
 import { ChartFrame } from "@/components/charts/chart-frame";
 import { commuteDurationSeries } from "@/lib/mock-data";
 
-export function CommuteDurationChart() {
+export function CommuteDurationChart({ data = commuteDurationSeries }: { data?: { day: string; minutes: number }[] }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
   return (
     <ChartFrame title="Commute duration" subtitle="Average minutes across your recent logs">
       {mounted ? <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={commuteDurationSeries} margin={{ left: -20, right: 8, top: 8, bottom: 0 }}>
+        <AreaChart data={data} margin={{ left: -20, right: 8, top: 8, bottom: 0 }}>
           <CartesianGrid stroke="rgba(255,255,255,0.07)" vertical={false} />
           <XAxis dataKey="day" tick={{ fill: "rgba(255,255,255,0.38)", fontSize: 12 }} tickLine={false} axisLine={false} />
           <YAxis tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 12 }} tickLine={false} axisLine={false} />

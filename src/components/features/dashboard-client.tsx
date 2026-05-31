@@ -1,0 +1,182 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import { Bell, CloudRain } from "lucide-react";
+import { Avatar } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { RouteCard } from "@/components/commute/route-card";
+import { RouteLogForm } from "@/components/commute/route-log-form";
+import { WeatherAirQualityChart } from "@/components/charts/weather-air-quality-chart";
+import { ResponsiveShell } from "@/components/layout/responsive-shell";
+import { MetricCard } from "@/components/ui-custom/metric-card";
+import { SearchInput } from "@/components/ui-custom/search-input";
+import { CommuteTipCard } from "@/components/commute/commute-tip-card";
+import { apiFetch } from "@/lib/api-client";
+import { dashboardActions } from "@/lib/mock-data";
+import type { DashboardData } from "@/lib/types";
+import { CalendarCheck, Database, Route, TrendingUp } from "lucide-react";
+
+const loadingData: DashboardData | null = null;
+
+export function DashboardClient() {
+  const [data, setData] = useState<DashboardData | null>(loadingData);
+  const [search, setSearch] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  async function loadDashboard() {
+    try {
+      const result = await apiFetch<DashboardData>("/api/dashboard");
+      setData(result);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to load dashboard");
+    }
+  }
+
+  useEffect(() => {
+    loadDashboard();
+  }, []);
+
+  const filteredRoutes = useMemo(() => {
+    const routes = data?.routes ?? [];
+    if (!search.trim()) return routes.slice(0, 4);
+    const q = search.toLowerCase();
+    return routes.filter((route) =>
+      [route.route_name, route.origin_name, route.destination_name, route.preferred_mode].some((value) => value.toLowerCase().includes(q))
+    );
+  }, [data?.routes, search]);
+
+  const metrics = [
+    { label: "Saved Routes", value: String(data?.metrics.savedRoutes ?? 0), sub: "Live from database", tone: "blue" as const, icon: Route },
+    { label: "Logs This Month", value: String(data?.metrics.logsThisMonth ?? 0), sub: "Route logs", tone: "teal" as const, icon: CalendarCheck },
+    { label: "Avg Commute", value: `${data?.metrics.avgCommute ?? 0}m`, sub: "Across recent logs", tone: "amber" as const, icon: TrendingUp },
+    { label: "Pipeline Status", value: data?.metrics.pipelineStatus ?? "Success", sub: "Latest run", tone: data?.metrics.pipelineStatus === "Failed" ? "red" as const : data?.metrics.pipelineStatus === "Partial" ? "amber" as const : "teal" as const, icon: Database }
+  ];
+
+  const userName = data?.user.full_name.split(" ")[0] ?? "Josie";
+  const initials = (data?.user.full_name ?? "Josie Dela Cruz").split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase();
+
+  const context = (
+    <div className="glass-panel relative overflow-hidden rounded-[24px] p-5">
+      <div className="absolute -right-10 -top-12 size-36 rounded-full bg-blue/10 blur-2xl" />
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.08em] text-white/38">Today&apos;s commute</p>
+          <h2 className="mt-2 font-heading text-2xl font-black text-white">{data?.today.route?.route_name ?? "Add a route to begin"}</h2>
+          <p className="mt-1 text-sm text-white/55">
+            {data?.today.route ? `${data.today.route.preferred_mode} · ${data.today.route.distance_km} km` : "Routes you add will appear here."}
+          </p>
+        </div>
+        <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-[var(--amber-border)] bg-[var(--amber-soft)] text-amber">
+          <CloudRain className="size-6" />
+        </div>
+      </div>
+      <div className="mt-5 grid grid-cols-3 gap-2">
+        <div className="rounded-2xl bg-white/[0.04] p-3">
+          <p className="text-[11px] text-white/35">Estimated</p>
+          <p className="mt-1 font-heading text-lg font-black">{data?.today.route?.estimated_minutes ?? 0} min</p>
+        </div>
+        <div className="rounded-2xl bg-[var(--amber-soft)] p-3">
+          <p className="text-[11px] text-white/35">Rain</p>
+          <p className="mt-1 font-heading text-lg font-black text-amber">{data?.today.rainChance ?? 0}%</p>
+        </div>
+        <div className="rounded-2xl bg-white/[0.04] p-3">
+          <p className="text-[11px] text-white/35">AQI</p>
+          <p className="mt-1 font-heading text-lg font-black">{data?.today.airQuality ?? "Moderate"}</p>
+        </div>
+      </div>
+      <p className="mt-4 rounded-2xl border border-[var(--blue-border)] bg-[var(--blue-soft)] p-3 text-sm leading-6 text-white/72">{data?.today.tip ?? "Loading commute tip..."}</p>
+      <div className="mt-4">
+        <RouteLogForm buttonLabel="Log ride" routes={data?.routes ?? []} onSaved={loadDashboard} />
+      </div>
+    </div>
+  );
+
+  const mobile = (
+    <div className="space-y-6">
+      <header className="flex items-center justify-between">
+        <Avatar initials={initials} />
+        <SearchInput className="mx-3 h-12 flex-1" value={search} onChange={setSearch} />
+        <Link href="/insights" className="flex size-10 items-center justify-center rounded-[14px] border border-[var(--blue-border)] bg-[var(--blue-soft)] text-blue">
+          <Bell className="size-5" />
+        </Link>
+      </header>
+      <section>
+        <p className="text-sm text-white/45">Good morning,</p>
+        <h1 className="font-heading text-4xl font-black">{userName}</h1>
+      </section>
+      {error ? <p className="rounded-2xl border border-[var(--red-border)] bg-[var(--red-soft)] p-3 text-sm text-red">{error}</p> : null}
+      {context}
+      <div className="grid grid-cols-4 gap-3">
+        {dashboardActions.map((action) => (
+          <Link key={action.label} href={action.href} className="flex flex-col items-center gap-2">
+            <span className="flex size-14 items-center justify-center rounded-[18px] border border-white/[0.09] bg-white/[0.06]">
+              <action.icon className="size-5 text-white/70" />
+            </span>
+            <span className="text-[11px] text-white/42">{action.label}</span>
+          </Link>
+        ))}
+      </div>
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="font-heading text-xl font-black">Saved routes</h2>
+          <Link href="/routes" className="text-sm font-semibold text-blue">See all</Link>
+        </div>
+        {filteredRoutes.map((route) => <RouteCard key={route.id} route={route} compact />)}
+      </section>
+    </div>
+  );
+
+  const desktop = (
+    <div className="space-y-5">
+      <div className="grid gap-4 xl:grid-cols-4">
+        {metrics.map((metric) => <MetricCard key={metric.label} {...metric} />)}
+      </div>
+      <div className="grid gap-4 xl:grid-cols-[1.3fr_0.9fr]">
+        {context}
+        <div className="grid gap-4">
+          <CommuteTipCard />
+          <div className="rounded-[20px] border border-white/[0.065] bg-surface p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="font-heading text-lg font-black">Favorite routes</h3>
+              <Link href="/routes" className="text-sm font-semibold text-blue">See all</Link>
+            </div>
+            <div className="mb-4">
+              <SearchInput className="h-10 w-full" value={search} onChange={setSearch} />
+            </div>
+            <div className="space-y-3">
+              {filteredRoutes.map((route) => <RouteCard key={route.id} route={route} compact />)}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+        <WeatherAirQualityChart />
+        <div className="rounded-[20px] border border-white/[0.065] bg-surface p-5">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="font-heading text-lg font-black">Recent logs</h3>
+            <RouteLogForm buttonLabel="Log ride" routes={data?.routes ?? []} onSaved={loadDashboard} />
+          </div>
+          <div className="space-y-3">
+            {(data?.logs ?? []).map((log) => (
+              <div key={log.id} className="flex items-center justify-between rounded-2xl bg-white/[0.035] p-3">
+                <div>
+                  <p className="font-heading text-sm font-bold">{log.ll_saved_routes?.route_name ?? "Route"}</p>
+                  <p className="mt-1 text-xs text-white/38">{log.travel_date} · {log.crowd_level}</p>
+                </div>
+                <span className="font-heading text-lg font-black text-white">{log.actual_duration_minutes}m</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <ResponsiveShell title={`Good morning, ${userName}`} subtitle="Your commute dashboard is live from Supabase." mobile={mobile}>
+      {desktop}
+    </ResponsiveShell>
+  );
+}
