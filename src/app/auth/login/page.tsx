@@ -28,7 +28,7 @@ export default function LoginPage() {
             </span>
             <span className="font-heading text-xl font-black">LakbayLoop</span>
           </Link>
-          <h2 className="font-heading text-4xl font-black">Open profile</h2>
+          <h2 className="font-heading text-3xl font-black">Open profile</h2>
           <p className="mt-3 text-white/55">Use your saved email to open routes, ride logs, and mobility insights. No email confirmation needed.</p>
           <LoginFormClient />
           <p className="mt-6 text-center text-sm text-white/45">

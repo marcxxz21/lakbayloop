@@ -17,7 +17,7 @@ export default function SignupPage() {
             </span>
             <span className="font-heading text-2xl font-black">LakbayLoop</span>
           </div>
-          <h1 className="mt-8 max-w-lg font-heading text-5xl font-black leading-none">Set up your commute profile.</h1>
+          <h1 className="mt-8 max-w-lg font-heading text-4xl font-black leading-tight lg:text-5xl lg:leading-none">Set up your commute profile.</h1>
           <p className="mt-5 max-w-md leading-7 text-white/58">
             Start with your email, school or workplace, and preferred commute modes. LakbayLoop stores profiles without sending confirmation emails.
           </p>

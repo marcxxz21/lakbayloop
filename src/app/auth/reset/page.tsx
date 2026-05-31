@@ -16,7 +16,7 @@ export default function ResetPasswordPage() {
           </span>
           <span className="font-heading text-xl font-black">LakbayLoop</span>
         </div>
-        <h1 className="mt-8 font-heading text-4xl font-black">No password needed</h1>
+        <h1 className="mt-8 font-heading text-3xl font-black">No password needed</h1>
         <p className="mt-3 leading-7 text-white/55">LakbayLoop now opens local profiles by email only, so Supabase reset emails are no longer part of the flow.</p>
         <div className="mt-8 grid gap-3">
           <Button asChild>

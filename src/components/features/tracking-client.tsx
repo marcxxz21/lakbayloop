@@ -196,7 +196,7 @@ export function TrackingClient() {
     <div className="space-y-5">
       <header>
         <p className="text-sm text-white/38">Realtime commute</p>
-        <h1 className="font-heading text-4xl font-black">Tracking</h1>
+        <h1 className="font-heading text-3xl font-black">Tracking</h1>
       </header>
       {content}
     </div>

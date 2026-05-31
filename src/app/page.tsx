@@ -62,7 +62,7 @@ export default async function LandingPage({
             <p className="mb-5 inline-flex rounded-full border border-[var(--blue-border)] bg-[var(--blue-soft)] px-4 py-2 text-sm font-semibold text-blue">
               Premium commute intelligence for students and young professionals
             </p>
-            <h1 className="font-heading text-5xl font-black leading-[0.95] tracking-normal text-white sm:text-6xl lg:text-7xl">
+            <h1 className="font-heading text-4xl font-black leading-tight tracking-normal text-white sm:text-5xl lg:text-7xl lg:leading-[0.95]">
               Your commute, ready before you leave.
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-8 text-white/65">

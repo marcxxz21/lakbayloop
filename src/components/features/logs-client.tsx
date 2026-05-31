@@ -62,7 +62,7 @@ export function LogsClient() {
       <header className="flex items-center justify-between gap-4">
         <div>
           <p className="text-sm text-white/38">Ride logs and pipeline</p>
-          <h1 className="font-heading text-4xl font-black">Log</h1>
+          <h1 className="font-heading text-3xl font-black">Log</h1>
         </div>
         <RouteLogForm buttonLabel="Log ride" routes={routes} onSaved={load} />
       </header>

@@ -32,7 +32,7 @@ export function InsightsClient() {
     <div className="space-y-5">
       <header>
         <p className="text-sm text-white/38">Patterns from your logs</p>
-        <h1 className="font-heading text-4xl font-black">Insights</h1>
+        <h1 className="font-heading text-3xl font-black">Insights</h1>
       </header>
       {error ? <p className="rounded-2xl border border-[var(--red-border)] bg-[var(--red-soft)] p-3 text-sm text-red">{error}</p> : null}
       <div className="grid grid-cols-2 gap-3">

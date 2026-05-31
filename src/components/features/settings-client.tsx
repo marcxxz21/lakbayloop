@@ -129,7 +129,7 @@ export function SettingsClient() {
     <div className="space-y-5">
       <header>
         <p className="text-sm text-white/38">Account preferences</p>
-        <h1 className="font-heading text-4xl font-black">Settings</h1>
+        <h1 className="font-heading text-3xl font-black">Settings</h1>
       </header>
       {content}
     </div>

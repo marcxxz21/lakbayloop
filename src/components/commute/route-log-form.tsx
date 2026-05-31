@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Star, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,12 +15,16 @@ export function RouteLogForm({
   buttonLabel = "Open log form",
   routes = [],
   selectedRouteId,
-  onSaved
+  onSaved,
+  openSignal,
+  hideTrigger = false
 }: {
   buttonLabel?: string;
   routes?: SavedRoute[];
   selectedRouteId?: string;
   onSaved?: (log: RouteLog) => void;
+  openSignal?: string | number;
+  hideTrigger?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [routeId, setRouteId] = useState(selectedRouteId ?? "");
@@ -32,6 +36,12 @@ export function RouteLogForm({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const availableRoutes = useMemo(() => routes, [routes]);
+
+  useEffect(() => {
+    if (openSignal === undefined) return;
+    setRouteId(selectedRouteId ?? routes[0]?.id ?? "");
+    setOpen(true);
+  }, [openSignal, routes, selectedRouteId]);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -63,10 +73,12 @@ export function RouteLogForm({
 
   return (
     <>
-      <Button onClick={() => {
-        setRouteId(selectedRouteId ?? routes[0]?.id ?? "");
-        setOpen(true);
-      }}>{buttonLabel}</Button>
+      {hideTrigger ? null : (
+        <Button onClick={() => {
+          setRouteId(selectedRouteId ?? routes[0]?.id ?? "");
+          setOpen(true);
+        }}>{buttonLabel}</Button>
+      )}
       {open ? (
         <div className="fixed inset-0 z-[80] flex items-end bg-bg/85 backdrop-blur-md lg:items-center lg:justify-center">
           <form onSubmit={handleSubmit} className="max-h-[90vh] w-full overflow-y-auto rounded-t-[28px] border border-white/[0.08] bg-surface p-5 shadow-panel lg:max-w-xl lg:rounded-[28px]">
