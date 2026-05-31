@@ -5,7 +5,7 @@ import { formatDateLabel } from "@/lib/commute-calculations";
 import type { InsightsData, RouteLog } from "@/lib/types";
 
 export async function GET(request: Request) {
-  const sessionId = getRequestSessionId(request);
+  const sessionId = await getRequestSessionId(request);
   const supabase = getSupabaseDataClient(sessionId);
 
   const { data, error } = await supabase

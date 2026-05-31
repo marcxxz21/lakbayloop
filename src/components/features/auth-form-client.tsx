@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { preferredModes } from "@/lib/constants";
 import { apiFetch } from "@/lib/api-client";
+import { setBrowserSessionId } from "@/lib/session";
+import { createClient } from "@/lib/supabase/client";
 import type { PreferredMode } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -22,13 +24,19 @@ export function LoginFormClient() {
     setLoading(true);
     setError(null);
     try {
+      const supabase = createClient();
+      const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+      if (authError) throw authError;
+      if (!data.user) throw new Error("Login did not return a Supabase user.");
+
+      setBrowserSessionId(data.user.id);
       await apiFetch("/api/profile", {
         method: "POST",
         body: JSON.stringify({
-          full_name: "Josie Dela Cruz",
+          full_name: data.user.user_metadata?.full_name || email.split("@")[0],
           email,
-          school_or_workplace: "UP Manila",
-          preferred_mode: "Mixed"
+          school_or_workplace: data.user.user_metadata?.school_or_workplace || "Not set",
+          preferred_mode: (data.user.user_metadata?.preferred_mode as PreferredMode | undefined) || "Mixed"
         })
       });
       window.location.href = "/dashboard";
@@ -39,22 +47,30 @@ export function LoginFormClient() {
     }
   }
 
+  function continueDemo() {
+    setBrowserSessionId("demo");
+    window.location.href = "/dashboard";
+  }
+
   return (
-    <form className="mt-8 space-y-5" onSubmit={submit}>
-      <div>
-        <Label>Email</Label>
-        <Input className="mt-2" type="email" placeholder="josie@example.com" value={email} onChange={(event) => setEmail(event.target.value)} required />
-      </div>
-      <div>
-        <Label>Password</Label>
-        <Input className="mt-2" type="password" placeholder="••••••••" value={password} onChange={(event) => setPassword(event.target.value)} required />
-      </div>
-      {error ? <p className="rounded-2xl border border-[var(--red-border)] bg-[var(--red-soft)] p-3 text-sm text-red">{error}</p> : null}
-      <Button className="w-full" disabled={loading}>
-        <Mail className="size-4" />
-        {loading ? "Opening..." : "Log in"}
-      </Button>
-    </form>
+    <div className="mt-8 space-y-3">
+      <form className="space-y-5" onSubmit={submit}>
+        <div>
+          <Label>Email</Label>
+          <Input className="mt-2" type="email" placeholder="josie@example.com" value={email} onChange={(event) => setEmail(event.target.value)} required />
+        </div>
+        <div>
+          <Label>Password</Label>
+          <Input className="mt-2" type="password" placeholder="Password" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={6} />
+        </div>
+        {error ? <p className="rounded-2xl border border-[var(--red-border)] bg-[var(--red-soft)] p-3 text-sm text-red">{error}</p> : null}
+        <Button className="w-full" disabled={loading}>
+          <Mail className="size-4" />
+          {loading ? "Opening..." : "Log in"}
+        </Button>
+      </form>
+      <Button type="button" variant="secondary" className="w-full" onClick={continueDemo}>Continue in demo mode</Button>
+    </div>
   );
 }
 
@@ -72,6 +88,22 @@ export function SignupFormClient() {
     setLoading(true);
     setError(null);
     try {
+      const supabase = createClient();
+      const { data, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+            school_or_workplace: school,
+            preferred_mode: mode
+          }
+        }
+      });
+      if (authError) throw authError;
+      if (!data.user) throw new Error("Signup did not return a Supabase user.");
+
+      setBrowserSessionId(data.user.id);
       await apiFetch("/api/profile", {
         method: "POST",
         body: JSON.stringify({
@@ -101,7 +133,7 @@ export function SignupFormClient() {
       </div>
       <div>
         <Label>Password</Label>
-        <Input className="mt-2" type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Password" required />
+        <Input className="mt-2" type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Password" required minLength={6} />
       </div>
       <div>
         <Label>School or workplace</Label>

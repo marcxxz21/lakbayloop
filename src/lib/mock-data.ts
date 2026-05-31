@@ -6,8 +6,8 @@ import {
   Database,
   Footprints,
   MapPinned,
+  Navigation,
   Route,
-  ShieldCheck,
   TrainFront,
   TrendingUp
 } from "lucide-react";
@@ -141,8 +141,8 @@ export const pipelineLogs = [
 export const dashboardActions = [
   { label: "Routes", icon: MapPinned, href: "/routes" },
   { label: "Log", icon: CalendarCheck, href: "/logs" },
-  { label: "Insights", icon: BarChart3, href: "/insights" },
-  { label: "Freshness", icon: ShieldCheck, href: "/logs" }
+  { label: "Track", icon: Navigation, href: "/tracking" },
+  { label: "Pipeline", icon: Database, href: "/pipeline" }
 ];
 
 export const commuteContext = {

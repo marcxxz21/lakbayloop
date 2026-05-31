@@ -18,7 +18,7 @@ const routeSchema = z.object({
 });
 
 export async function GET(request: Request) {
-  const sessionId = getRequestSessionId(request);
+  const sessionId = await getRequestSessionId(request);
   const supabase = getSupabaseDataClient(sessionId);
   const { searchParams } = new URL(request.url);
   const q = searchParams.get("q")?.trim();
@@ -41,7 +41,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const sessionId = getRequestSessionId(request);
+  const sessionId = await getRequestSessionId(request);
   const supabase = getSupabaseDataClient(sessionId);
   const body = routeSchema.parse(await request.json());
   const distanceKm = calculateDistanceKm(body.origin_lat, body.origin_lng, body.destination_lat, body.destination_lng);

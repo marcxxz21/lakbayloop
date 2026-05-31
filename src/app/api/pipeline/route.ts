@@ -4,7 +4,7 @@ import { getSupabaseDataClient } from "@/lib/supabase/data";
 import type { PipelineStatus, SavedRoute } from "@/lib/types";
 
 export async function GET(request: Request) {
-  const sessionId = getRequestSessionId(request);
+  const sessionId = await getRequestSessionId(request);
   const supabase = getSupabaseDataClient(sessionId);
 
   const { data, error } = await supabase
@@ -29,7 +29,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const sessionId = getRequestSessionId(request);
+  const sessionId = await getRequestSessionId(request);
   const supabase = getSupabaseDataClient(sessionId);
 
   const { data: routes, error: routeError } = await supabase
@@ -62,7 +62,8 @@ export async function POST(request: Request) {
 }
 
 async function refreshWeather(supabase: ReturnType<typeof getSupabaseDataClient>, sessionId: string, route: SavedRoute) {
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${route.destination_lat}&longitude=${route.destination_lng}&daily=temperature_2m_max,precipitation_probability_max&timezone=auto&forecast_days=1`;
+  const baseUrl = process.env.OPEN_METEO_FORECAST_URL ?? "https://api.open-meteo.com/v1/forecast";
+  const url = `${baseUrl}?latitude=${route.destination_lat}&longitude=${route.destination_lng}&daily=temperature_2m_max,precipitation_probability_max&timezone=auto&forecast_days=1`;
   const response = await fetch(url, { next: { revalidate: 1800 } });
   if (!response.ok) throw new Error("Weather API failed");
   const json = await response.json();
@@ -82,7 +83,8 @@ async function refreshWeather(supabase: ReturnType<typeof getSupabaseDataClient>
 }
 
 async function refreshAirQuality(supabase: ReturnType<typeof getSupabaseDataClient>, sessionId: string, route: SavedRoute) {
-  const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${route.destination_lat}&longitude=${route.destination_lng}&hourly=us_aqi&timezone=auto&forecast_days=1`;
+  const baseUrl = process.env.OPEN_METEO_AIR_QUALITY_URL ?? "https://air-quality-api.open-meteo.com/v1/air-quality";
+  const url = `${baseUrl}?latitude=${route.destination_lat}&longitude=${route.destination_lng}&hourly=us_aqi&timezone=auto&forecast_days=1`;
   const response = await fetch(url, { next: { revalidate: 1800 } });
   if (!response.ok) throw new Error("Air quality API failed");
   const json = await response.json();
@@ -103,7 +105,8 @@ async function refreshAirQuality(supabase: ReturnType<typeof getSupabaseDataClie
 }
 
 async function refreshOsrmRoute(supabase: ReturnType<typeof getSupabaseDataClient>, sessionId: string, route: SavedRoute) {
-  const url = `https://router.project-osrm.org/route/v1/driving/${route.origin_lng},${route.origin_lat};${route.destination_lng},${route.destination_lat}?overview=false`;
+  const baseUrl = process.env.OSRM_ROUTE_URL ?? "https://router.project-osrm.org/route/v1";
+  const url = `${baseUrl}/driving/${route.origin_lng},${route.origin_lat};${route.destination_lng},${route.destination_lat}?overview=false`;
   const response = await fetch(url, { next: { revalidate: 1800 } });
   if (!response.ok) throw new Error("OSRM API failed");
   const json = await response.json();

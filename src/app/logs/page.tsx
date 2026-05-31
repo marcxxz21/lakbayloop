@@ -1,5 +1,5 @@
-import { LogsClient } from "@/components/features/logs-client";
+import { RideLogsClient } from "@/components/features/ride-logs-client";
 
 export default function LogsPage() {
-  return <LogsClient />;
+  return <RideLogsClient />;
 }

@@ -10,7 +10,7 @@ const items = [
   { label: "Routes", href: "/routes", icon: MapPinned },
   { label: "Log", href: "/logs", icon: Plus, center: true },
   { label: "Insights", href: "/insights", icon: BarChart3 },
-  { label: "Profile", href: "/dashboard", icon: UserRound }
+  { label: "Profile", href: "/settings", icon: UserRound }
 ];
 
 export function MobileBottomNav() {
@@ -19,7 +19,7 @@ export function MobileBottomNav() {
   return (
     <nav className="fixed inset-x-3 bottom-4 z-50 mx-auto flex max-w-md items-center justify-around rounded-[26px] border border-white/[0.08] bg-surface/95 px-2 py-2 shadow-panel backdrop-blur-2xl lg:hidden">
       {items.map((item) => {
-        const active = pathname === item.href && !(pathname === "/dashboard" && item.label === "Profile");
+        const active = pathname === item.href;
         return (
           <Link
             key={item.label}

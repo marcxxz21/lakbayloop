@@ -11,7 +11,7 @@ const profileSchema = z.object({
 });
 
 export async function GET(request: Request) {
-  const sessionId = getRequestSessionId(request);
+  const sessionId = await getRequestSessionId(request);
   const supabase = getSupabaseDataClient(sessionId);
 
   const { data, error } = await supabase
@@ -26,7 +26,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const sessionId = getRequestSessionId(request);
+  const sessionId = await getRequestSessionId(request);
   const supabase = getSupabaseDataClient(sessionId);
   const body = profileSchema.parse(await request.json());
 
@@ -45,5 +45,51 @@ export async function POST(request: Request) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+  const routeError = await ensureStarterRoutes(supabase, sessionId);
+  if (routeError) return NextResponse.json({ error: routeError.message }, { status: 500 });
+
   return NextResponse.json({ user: data });
+}
+
+async function ensureStarterRoutes(supabase: ReturnType<typeof getSupabaseDataClient>, sessionId: string) {
+  const { count, error: countError } = await supabase
+    .from("ll_saved_routes")
+    .select("id", { count: "exact", head: true })
+    .eq("session_id", sessionId);
+
+  if (countError) return countError;
+  if ((count ?? 0) > 0) return null;
+
+  const { error } = await supabase.from("ll_saved_routes").insert([
+    {
+      session_id: sessionId,
+      route_name: "Home -> School",
+      origin_name: "Home",
+      origin_lat: 14.676,
+      origin_lng: 121.043,
+      destination_name: "School",
+      destination_lat: 14.578,
+      destination_lng: 120.985,
+      preferred_mode: "Mixed",
+      is_favorite: true,
+      distance_km: 3.2,
+      estimated_minutes: 28
+    },
+    {
+      session_id: sessionId,
+      route_name: "Campus -> Work",
+      origin_name: "Campus",
+      origin_lat: 14.583,
+      origin_lng: 120.986,
+      destination_name: "Work",
+      destination_lat: 14.604,
+      destination_lng: 121.02,
+      preferred_mode: "Jeepney",
+      is_favorite: false,
+      distance_km: 5.8,
+      estimated_minutes: 42
+    }
+  ]);
+
+  return error;
 }

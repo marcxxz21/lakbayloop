@@ -56,6 +56,19 @@ export type PipelineLog = {
   error_message: string | null;
 };
 
+export type TrackingPoint = {
+  id: string;
+  session_id: string;
+  route_id: string | null;
+  latitude: number;
+  longitude: number;
+  accuracy_m: number | null;
+  speed_mps: number | null;
+  heading_degrees: number | null;
+  recorded_at: string;
+  created_at: string;
+};
+
 export type DashboardData = {
   user: AppUser;
   routes: SavedRoute[];

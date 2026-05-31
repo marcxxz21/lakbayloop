@@ -4,7 +4,7 @@ import { getSupabaseDataClient } from "@/lib/supabase/data";
 import type { DashboardData, PipelineStatus, RouteLog, SavedRoute } from "@/lib/types";
 
 export async function GET(request: Request) {
-  const sessionId = getRequestSessionId(request);
+  const sessionId = await getRequestSessionId(request);
   const supabase = getSupabaseDataClient(sessionId);
 
   const [userResult, routesResult, logsResult, pipelineResult, weatherResult, airResult] = await Promise.all([

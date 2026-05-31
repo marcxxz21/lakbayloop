@@ -19,7 +19,7 @@ export default function SignupPage() {
           </div>
           <h1 className="mt-8 max-w-lg font-heading text-5xl font-black leading-none">Set up your commute profile.</h1>
           <p className="mt-5 max-w-md leading-7 text-white/58">
-            Start with your school or workplace and preferred commute mode. Supabase Auth will connect here in the next phase.
+            Start with your school or workplace and preferred commute mode. Supabase Auth keeps your routes and logs tied to your account.
           </p>
         </section>
         <section className="rounded-[28px] border border-white/[0.08] bg-surface p-5 shadow-panel sm:p-7">

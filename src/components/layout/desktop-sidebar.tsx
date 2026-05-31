@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Database, Home, MapPinned, PlusCircle, Route, Settings } from "lucide-react";
+import { BarChart3, Database, Home, MapPinned, Navigation, PlusCircle, Route, Settings } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { mockUser } from "@/lib/mock-data";
@@ -12,8 +12,9 @@ const navItems = [
   { label: "Routes", href: "/routes", icon: Route },
   { label: "Log Ride", href: "/logs", icon: PlusCircle },
   { label: "Insights", href: "/insights", icon: BarChart3 },
-  { label: "Pipeline", href: "/logs", icon: Database },
-  { label: "Settings", href: "/dashboard", icon: Settings }
+  { label: "Tracking", href: "/tracking", icon: Navigation },
+  { label: "Pipeline", href: "/pipeline", icon: Database },
+  { label: "Settings", href: "/settings", icon: Settings }
 ];
 
 export function DesktopSidebar() {
@@ -37,7 +38,7 @@ export function DesktopSidebar() {
         <p className="px-3 py-3 text-[10px] font-bold uppercase tracking-[0.12em] text-white/25">Workspace</p>
         <div className="space-y-1">
           {navItems.map((item) => {
-            const active = pathname === item.href || (pathname === "/logs" && item.label === "Pipeline");
+            const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
             return (
               <Link
                 key={item.label}
