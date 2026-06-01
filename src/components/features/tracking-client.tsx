@@ -161,6 +161,9 @@ function NavigationMap({
   onStop: () => void;
 }) {
   const [clockNow, setClockNow] = useState<number | null>(null);
+  const [voiceGuidance, setVoiceGuidance] = useState(true);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportMessage, setReportMessage] = useState<string | null>(null);
   const routeMapAvailable = Boolean(route?.origin_lat && route?.origin_lng && route?.destination_lat && route?.destination_lng);
   const destination = routeMapAvailable ? { lat: Number(route?.destination_lat), lng: Number(route?.destination_lng) } : null;
   const currentPoint = current ? { lat: Number(current.latitude), lng: Number(current.longitude) } : null;
@@ -182,6 +185,19 @@ function NavigationMap({
     const interval = window.setInterval(() => setClockNow(Date.now()), 30000);
     return () => window.clearInterval(interval);
   }, []);
+
+  function goBack() {
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      window.location.assign("/routes");
+    }
+  }
+
+  function submitReport(label: string) {
+    setReportMessage(`${label} report saved for this session.`);
+    setReportOpen(false);
+  }
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#eef1f4] text-[#111318] lg:min-h-[720px] lg:rounded-[28px] lg:border lg:border-white/[0.08]">
@@ -236,7 +252,7 @@ function NavigationMap({
 
       <div className="absolute left-0 right-0 top-0 bg-[#050608] px-4 pb-3 pt-[calc(env(safe-area-inset-top)+14px)] text-white shadow-[0_12px_28px_rgba(0,0,0,0.24)]">
         <div className="flex items-center gap-3">
-          <button type="button" className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white/10" aria-label="Back">
+          <button type="button" className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white/10 transition hover:bg-white/16 active:scale-95" onClick={goBack} aria-label="Back">
             <ChevronLeft className="size-6" />
           </button>
           <div className="min-w-0 flex-1">
@@ -252,10 +268,17 @@ function NavigationMap({
       </div>
 
       <div className="absolute right-4 top-[calc(env(safe-area-inset-top)+112px)] grid gap-3">
-        <button type="button" className="flex size-11 items-center justify-center rounded-full bg-white text-[#20242a] shadow-panel" aria-label="Voice guidance">
+        <button
+          type="button"
+          className="flex size-11 items-center justify-center rounded-full bg-white text-[#20242a] shadow-panel transition hover:scale-105 active:scale-95 data-[active=true]:bg-blue data-[active=true]:text-white"
+          data-active={voiceGuidance}
+          onClick={() => setVoiceGuidance((enabled) => !enabled)}
+          aria-label={voiceGuidance ? "Turn voice guidance off" : "Turn voice guidance on"}
+          aria-pressed={voiceGuidance}
+        >
           <Volume2 className="size-5" />
         </button>
-        <button type="button" className="flex size-11 items-center justify-center rounded-full bg-pink-500 text-white shadow-panel" aria-label="Report alert">
+        <button type="button" className="flex size-11 items-center justify-center rounded-full bg-pink-500 text-white shadow-panel transition hover:scale-105 active:scale-95" onClick={() => setReportOpen(true)} aria-label="Report alert">
           <AlertTriangle className="size-5" />
         </button>
       </div>
@@ -265,9 +288,23 @@ function NavigationMap({
         <span className="text-[10px] font-bold leading-none">km/h</span>
       </div>
 
-      <div className="absolute bottom-[188px] right-5 flex size-14 items-center justify-center rounded-full bg-white text-[#111318] shadow-panel">
+      <button type="button" className="absolute bottom-[188px] right-5 flex size-14 items-center justify-center rounded-full bg-white text-[#111318] shadow-panel transition hover:scale-105 active:scale-95" onClick={() => setReportOpen(true)} aria-label="Open road report">
         <AlertTriangle className="size-7 text-amber" />
-      </div>
+      </button>
+
+      {reportOpen ? (
+        <div className="absolute inset-x-4 bottom-[300px] z-20 rounded-[22px] bg-white p-4 text-[#111318] shadow-[0_18px_44px_rgba(0,0,0,0.22)] lg:left-auto lg:right-5 lg:w-80">
+          <p className="font-heading text-lg font-black">Report route issue</p>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            {["Traffic", "Rain", "Road work", "Delay"].map((label) => (
+              <button key={label} type="button" className="rounded-2xl border border-black/10 bg-black/[0.04] px-3 py-3 text-sm font-bold transition hover:bg-black/[0.08]" onClick={() => submitReport(label)}>
+                {label}
+              </button>
+            ))}
+          </div>
+          <button type="button" className="mt-3 text-sm font-bold text-black/55" onClick={() => setReportOpen(false)}>Cancel</button>
+        </div>
+      ) : null}
 
       <div className="absolute bottom-0 left-0 right-0 rounded-t-[26px] bg-white px-5 pb-[calc(env(safe-area-inset-bottom)+18px)] pt-4 text-[#111318] shadow-[0_-16px_34px_rgba(0,0,0,0.18)]">
         <div className="grid grid-cols-3 items-center gap-2 text-center">
@@ -313,6 +350,8 @@ function NavigationMap({
             </Button>
           )}
         </div>
+        {reportMessage ? <p className="mt-3 text-xs font-semibold text-black/55">{reportMessage}</p> : null}
+        <p className="mt-2 text-xs font-semibold text-black/45">Voice guidance {voiceGuidance ? "on" : "off"} · ETA uses saved route time scaled by remaining distance.</p>
         {saving ? <p className="mt-3 text-xs font-semibold text-teal">Saving latest point...</p> : null}
         {error ? <p className="mt-3 rounded-2xl border border-[var(--red-border)] bg-[var(--red-soft)] p-2 text-xs text-red">{error}</p> : null}
       </div>

@@ -87,7 +87,7 @@ export function RouteLogForm({
                 <p className="text-xs font-bold uppercase tracking-[0.08em] text-white/35">Commute log</p>
                 <h2 className="font-heading text-xl font-black">How was the ride?</h2>
               </div>
-              <button className="flex size-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.06]" onClick={() => setOpen(false)} aria-label="Close">
+              <button type="button" className="flex size-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.06]" onClick={() => setOpen(false)} aria-label="Close">
                 <X className="size-4" />
               </button>
             </div>

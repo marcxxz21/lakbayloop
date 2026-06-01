@@ -20,6 +20,7 @@ export function RoutesPageClient() {
   const [selected, setSelected] = useState<SavedRoute | null>(null);
   const [mobileDetailsOpen, setMobileDetailsOpen] = useState(false);
   const [mobileLogSignal, setMobileLogSignal] = useState<number | undefined>(undefined);
+  const [desktopLogSignal, setDesktopLogSignal] = useState<number | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -135,11 +136,21 @@ export function RoutesPageClient() {
   );
 
   async function toggleFavorite(route: SavedRoute) {
-    await apiFetch<{ route: SavedRoute }>(`/api/routes/${route.id}`, {
-      method: "PATCH",
-      body: JSON.stringify({ is_favorite: !route.is_favorite })
-    });
-    await loadRoutes();
+    const nextFavorite = !route.is_favorite;
+    setError(null);
+    setRoutes((items) => items.map((item) => item.id === route.id ? { ...item, is_favorite: nextFavorite } : item));
+    setSelected((current) => current?.id === route.id ? { ...current, is_favorite: nextFavorite } : current);
+
+    try {
+      await apiFetch<{ route: SavedRoute }>(`/api/routes/${route.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ is_favorite: nextFavorite })
+      });
+    } catch (err) {
+      setRoutes((items) => items.map((item) => item.id === route.id ? { ...item, is_favorite: route.is_favorite } : item));
+      setSelected((current) => current?.id === route.id ? { ...current, is_favorite: route.is_favorite } : current);
+      setError(err instanceof Error ? err.message : "Unable to update favorite");
+    }
   }
 
   const desktop = (
@@ -163,9 +174,26 @@ export function RoutesPageClient() {
         {error ? <p className="rounded-2xl border border-[var(--red-border)] bg-[var(--red-soft)] p-3 text-sm text-red">{error}</p> : null}
         <div className="grid gap-4 xl:grid-cols-2">
           {loading ? <p className="text-sm text-white/45">Loading routes...</p> : routes.map((route) => (
-            <RouteCard key={route.id} route={route} onSelect={setSelected} onLog={setSelected} onToggleFavorite={toggleFavorite} />
+            <RouteCard
+              key={route.id}
+              route={route}
+              active={selected?.id === route.id}
+              onSelect={setSelected}
+              onLog={(item) => {
+                setSelected(item);
+                setDesktopLogSignal((signal) => (signal ?? 0) + 1);
+              }}
+              onToggleFavorite={toggleFavorite}
+            />
           ))}
         </div>
+        <RouteLogForm
+          routes={routes}
+          selectedRouteId={selected?.id}
+          openSignal={desktopLogSignal}
+          hideTrigger
+          onSaved={() => loadRoutes()}
+        />
       </section>
       <aside className="h-fit rounded-[24px] border border-white/[0.065] bg-surface p-5">
         {selected ? (
@@ -178,10 +206,16 @@ export function RoutesPageClient() {
               <StatusBadge status={selected.is_favorite ? "Good" : "Moderate"} />
             </div>
             <div className="mt-5 space-y-3 text-sm text-white/65">
-              <div className="flex justify-between rounded-2xl bg-white/[0.035] p-3"><span>Origin</span><b className="text-white">{selected.origin_name}</b></div>
-              <div className="flex justify-between rounded-2xl bg-white/[0.035] p-3"><span>Destination</span><b className="text-white">{selected.destination_name}</b></div>
-              <div className="flex justify-between rounded-2xl bg-white/[0.035] p-3"><span>Preferred mode</span><b className="text-white">{selected.preferred_mode}</b></div>
-              <div className="flex justify-between rounded-2xl bg-white/[0.035] p-3"><span>Estimated</span><b className="text-white">{selected.estimated_minutes} min</b></div>
+              <div className="rounded-2xl bg-white/[0.035] p-3">
+                <span className="block text-xs text-white/38">Origin</span>
+                <b className="mt-1 block leading-5 text-white">{selected.origin_name}</b>
+              </div>
+              <div className="rounded-2xl bg-white/[0.035] p-3">
+                <span className="block text-xs text-white/38">Destination</span>
+                <b className="mt-1 block leading-5 text-white">{selected.destination_name}</b>
+              </div>
+              <div className="flex justify-between gap-4 rounded-2xl bg-white/[0.035] p-3"><span>Preferred mode</span><b className="text-white">{selected.preferred_mode}</b></div>
+              <div className="flex justify-between gap-4 rounded-2xl bg-white/[0.035] p-3"><span>Estimated</span><b className="text-white">{selected.estimated_minutes} min</b></div>
             </div>
             <div className="mt-5">
               <RouteLogForm buttonLabel="Log this route" routes={routes} selectedRouteId={selected.id} />

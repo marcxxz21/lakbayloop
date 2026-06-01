@@ -16,12 +16,14 @@ const modeIcons = {
 
 export function RouteCard({
   route,
+  active = false,
   compact = false,
   onLog,
   onSelect,
   onToggleFavorite
 }: {
   route: SavedRoute;
+  active?: boolean;
   compact?: boolean;
   onLog?: (route: SavedRoute) => void;
   onSelect?: (route: SavedRoute) => void;
@@ -31,7 +33,11 @@ export function RouteCard({
   const condition = route.condition ?? (route.is_favorite ? "Good" : "Moderate");
 
   return (
-    <div className={cn("min-w-0 rounded-[20px] border border-white/[0.055] bg-surface p-4 transition hover:border-white/10 hover:bg-surface-soft", compact ? "space-y-3" : "space-y-4")}>
+    <div className={cn(
+      "min-w-0 rounded-[20px] border border-white/[0.055] bg-surface p-4 transition duration-200 hover:border-white/10 hover:bg-surface-soft",
+      active && "border-[var(--blue-border)] bg-[var(--blue-soft)] shadow-[0_0_0_1px_rgba(91,142,240,0.16)]",
+      compact ? "space-y-3" : "space-y-4"
+    )}>
       <div className="flex min-w-0 items-start gap-3">
         <div className="flex size-11 shrink-0 items-center justify-center rounded-[14px] border border-[var(--blue-border)] bg-[var(--blue-soft)] text-blue">
           <Icon className="size-5" />
@@ -39,8 +45,19 @@ export function RouteCard({
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-2">
             <h3 className="truncate font-heading text-base font-black text-white">{route.route_name}</h3>
-            <button type="button" onClick={() => onToggleFavorite?.(route)} aria-label="Toggle favorite">
-              <Heart className={cn("size-4 text-white/24", route.is_favorite && "fill-blue text-blue")} />
+            <button
+              type="button"
+              onClick={() => onToggleFavorite?.(route)}
+              aria-label={route.is_favorite ? "Remove favorite" : "Add favorite"}
+              aria-pressed={route.is_favorite}
+              className="group flex size-8 shrink-0 items-center justify-center rounded-full transition duration-200 hover:scale-105 hover:bg-white/[0.06] active:scale-95"
+            >
+              <Heart
+                className={cn(
+                  "size-4 text-white/24 transition-all duration-300 ease-out group-hover:scale-110",
+                  route.is_favorite && "scale-110 fill-blue text-blue drop-shadow-[0_0_10px_rgba(91,142,240,0.55)]"
+                )}
+              />
             </button>
           </div>
           <p className="mt-1 flex min-w-0 items-center gap-1 text-xs text-white/42">
