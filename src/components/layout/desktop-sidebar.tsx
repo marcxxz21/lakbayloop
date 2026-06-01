@@ -77,13 +77,13 @@ export function DesktopSidebar() {
       </nav>
 
       <div className="border-t border-white/[0.05] p-3">
-        <div className="flex items-center gap-3 rounded-2xl p-3 transition hover:bg-white/[0.04]">
+        <Link href="/settings" className="flex items-center gap-3 rounded-2xl p-3 transition hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/70">
           <Avatar initials={initials || "LL"} />
           <div className="min-w-0">
             <p className="truncate font-heading text-sm font-bold text-white">{displayName}</p>
             <p className="truncate text-xs text-white/32">{workplace}</p>
           </div>
-        </div>
+        </Link>
       </div>
     </aside>
   );

@@ -35,8 +35,8 @@ Kalakbay is a responsive daily commute companion for riders of all ages. It uses
 
 This implementation is converted from the existing project mockups:
 
-- `lakbayloop-web.html` for the desktop dashboard shell, sidebar, auth overlay direction, KPI cards, dashboard styling, routes, insights, tables, and modals.
-- `lakbayloop.html` for the mobile app flow, bottom navigation, route cards, metric cards, badges, route logging, and mobile interaction style.
+- `kalakbay-web.html` for the desktop dashboard shell, sidebar, auth overlay direction, KPI cards, dashboard styling, routes, insights, tables, and modals.
+- `kalakbay.html` for the mobile app flow, bottom navigation, route cards, metric cards, badges, route logging, and mobile interaction style.
 
 ## Responsive Design
 
@@ -86,7 +86,7 @@ Dashboard Analytics
 - `ll_raw_api_responses`
 - `ll_pipeline_logs`
 
-The `ll_` prefix keeps Kalakbay isolated from other tables in the shared Supabase project. RLS is enabled and scoped by the `x-lakbayloop-session` request header for the current demo session. Production auth should replace this with `auth.uid()` ownership policies.
+The `ll_` prefix keeps Kalakbay isolated from other tables in the shared Supabase project. RLS is enabled and scoped by the `x-lakbayloop-session` request header for the current browser profile session. Production auth can replace this with `auth.uid()` ownership policies later.
 
 ## Planned APIs
 
