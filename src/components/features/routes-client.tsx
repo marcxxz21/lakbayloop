@@ -11,7 +11,12 @@ import { Button } from "@/components/ui/button";
 import { SearchInput } from "@/components/ui-custom/search-input";
 import { StatusBadge } from "@/components/ui-custom/status-badge";
 import { apiFetch } from "@/lib/api-client";
-import type { SavedRoute } from "@/lib/types";
+import { cn } from "@/lib/utils";
+import type { PreferredMode, SavedRoute } from "@/lib/types";
+
+type RouteFilter = "All" | "Favorites" | PreferredMode;
+
+const routeFilterOptions: RouteFilter[] = ["All", "Favorites", "Walking", "Jeepney", "Bus", "Train", "Bike", "Car", "Mixed"];
 
 export function RoutesPageClient() {
   const searchParams = useSearchParams();
@@ -22,8 +27,16 @@ export function RoutesPageClient() {
   const [desktopDetailsOpen, setDesktopDetailsOpen] = useState(false);
   const [mobileLogSignal, setMobileLogSignal] = useState<number | undefined>(undefined);
   const [desktopLogSignal, setDesktopLogSignal] = useState<number | undefined>(undefined);
+  const [routeFilter, setRouteFilter] = useState<RouteFilter>("All");
+  const [filterOpen, setFilterOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const visibleRoutes = routes.filter((route) => {
+    if (routeFilter === "All") return true;
+    if (routeFilter === "Favorites") return route.is_favorite;
+    return route.preferred_mode === routeFilter;
+  });
 
   async function loadRoutes(search = query) {
     setLoading(true);
@@ -55,7 +68,37 @@ export function RoutesPageClient() {
           <p className="text-xs text-white/38">Saved commutes</p>
           <h1 className="font-heading text-3xl font-black">My Routes</h1>
         </div>
-        <AddRouteForm onSaved={() => loadRoutes()} />
+        <div className="flex shrink-0 gap-2">
+          <div className="relative">
+            <Button size="icon" variant="secondary" onClick={() => setFilterOpen((open) => !open)} aria-expanded={filterOpen} aria-haspopup="menu" aria-label="Filter routes">
+              <Filter className="size-4" />
+            </Button>
+            {filterOpen ? (
+              <div className="absolute right-0 top-12 z-30 w-56 rounded-2xl border border-white/[0.08] bg-[#11161f] p-2 shadow-panel" role="menu">
+                {routeFilterOptions.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    className={cn(
+                      "flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-semibold text-white/58 transition hover:bg-white/[0.06] hover:text-white",
+                      routeFilter === option && "bg-[var(--blue-soft)] text-white"
+                    )}
+                    onClick={() => {
+                      setRouteFilter(option);
+                      setFilterOpen(false);
+                    }}
+                    role="menuitemradio"
+                    aria-checked={routeFilter === option}
+                  >
+                    <span>{option}</span>
+                    {routeFilter === option ? <span className="size-2 rounded-full bg-blue" /> : null}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+          <AddRouteForm onSaved={() => loadRoutes()} />
+        </div>
       </header>
       <form onSubmit={(event) => {
         event.preventDefault();
@@ -65,21 +108,24 @@ export function RoutesPageClient() {
       </form>
       {error ? <p className="rounded-2xl border border-[var(--red-border)] bg-[var(--red-soft)] p-3 text-sm text-red">{error}</p> : null}
       <div className="space-y-3">
-        {loading ? <p className="text-sm text-white/45">Loading routes...</p> : routes.map((route) => (
+        {loading ? <p className="text-sm text-white/45">Loading routes...</p> : visibleRoutes.map((route) => (
           <RouteCard
             key={route.id}
             route={route}
             onSelect={(item) => {
+              setFilterOpen(false);
               setSelected(item);
               setMobileDetailsOpen(true);
             }}
             onLog={(item) => {
+              setFilterOpen(false);
               setSelected(item);
               setMobileLogSignal((signal) => (signal ?? 0) + 1);
             }}
             onToggleFavorite={toggleFavorite}
           />
         ))}
+        {!loading && !visibleRoutes.length ? <p className="rounded-2xl border border-white/[0.06] bg-white/[0.035] p-4 text-sm text-white/48">No routes match this filter.</p> : null}
       </div>
       <RouteLogForm
         routes={routes}
@@ -165,31 +211,59 @@ export function RoutesPageClient() {
             <SearchInput className="h-11 w-full" value={query} onChange={setQuery} submitLabel="Search routes" />
           </form>
           <div className="flex gap-2">
-            <Button variant="secondary">
-              <Filter className="size-4" />
-              Filter
-            </Button>
+            <div className="relative">
+              <Button variant="secondary" onClick={() => setFilterOpen((open) => !open)} aria-expanded={filterOpen} aria-haspopup="menu">
+                <Filter className="size-4" />
+                {routeFilter === "All" ? "Filter" : routeFilter}
+              </Button>
+              {filterOpen ? (
+                <div className="absolute right-0 top-12 z-30 w-56 rounded-2xl border border-white/[0.08] bg-[#11161f] p-2 shadow-panel" role="menu">
+                  {routeFilterOptions.map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      className={cn(
+                        "flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-semibold text-white/58 transition hover:bg-white/[0.06] hover:text-white",
+                        routeFilter === option && "bg-[var(--blue-soft)] text-white"
+                      )}
+                      onClick={() => {
+                        setRouteFilter(option);
+                        setFilterOpen(false);
+                      }}
+                      role="menuitemradio"
+                      aria-checked={routeFilter === option}
+                    >
+                      <span>{option}</span>
+                      {routeFilter === option ? <span className="size-2 rounded-full bg-blue" /> : null}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
             <AddRouteForm onSaved={() => loadRoutes()} />
           </div>
         </div>
         {error ? <p className="rounded-2xl border border-[var(--red-border)] bg-[var(--red-soft)] p-3 text-sm text-red">{error}</p> : null}
         <div className="grid gap-4 xl:grid-cols-2">
-          {loading ? <p className="text-sm text-white/45">Loading routes...</p> : routes.map((route) => (
+          {loading ? <p className="text-sm text-white/45">Loading routes...</p> : visibleRoutes.map((route) => (
             <RouteCard
               key={route.id}
               route={route}
               active={selected?.id === route.id}
               onSelect={(item) => {
+                setFilterOpen(false);
                 setSelected(item);
                 setDesktopDetailsOpen(true);
               }}
               onLog={(item) => {
+                setFilterOpen(false);
                 setSelected(item);
                 setDesktopLogSignal((signal) => (signal ?? 0) + 1);
               }}
               onToggleFavorite={toggleFavorite}
             />
           ))}
+          {!loading && !visibleRoutes.length ? <p className="rounded-2xl border border-white/[0.06] bg-white/[0.035] p-4 text-sm text-white/48">No routes match this filter.</p> : null}
         </div>
         <RouteLogForm
           routes={routes}

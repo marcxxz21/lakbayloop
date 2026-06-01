@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, BarChart3, Database, MapPinned, Route } from "lucide-react";
+import { ArrowRight, BarChart3, MapPinned, Route } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GlassCard } from "@/components/ui-custom/glass-card";
 import { DarkCard } from "@/components/ui-custom/dark-card";
@@ -110,20 +110,6 @@ export default async function LandingPage({
           ))}
         </section>
 
-        <section className="mb-8 rounded-[24px] border border-white/[0.065] bg-white/[0.035] p-5">
-          <div className="flex flex-wrap items-center gap-3 text-sm font-semibold text-white/62">
-            <Database className="size-5 text-teal" />
-            <span>Free APIs</span>
-            <span className="text-white/22">-&gt;</span>
-            <span>Vercel Cron</span>
-            <span className="text-white/22">-&gt;</span>
-            <span>Raw storage</span>
-            <span className="text-white/22">-&gt;</span>
-            <span>Transforms</span>
-            <span className="text-white/22">-&gt;</span>
-            <span>Supabase analytics</span>
-          </div>
-        </section>
       </div>
     </main>
   );

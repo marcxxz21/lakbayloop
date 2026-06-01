@@ -446,6 +446,9 @@ function LiveTrackingScreen({
   const [voiceGuidance, setVoiceGuidance] = useState(true);
   const [reportOpen, setReportOpen] = useState(false);
   const [layersDimmed, setLayersDimmed] = useState(false);
+  const [detailsCollapsed, setDetailsCollapsed] = useState(false);
+  const sheetDragStartRef = useRef<number | null>(null);
+  const sheetDraggedRef = useRef(false);
   const isActive = trackingStatus === "tracking" || trackingStatus === "requesting-permission" || trackingStatus === "paused";
   const isTracking = trackingStatus === "tracking";
   const activelyFollowing = isTracking && isFollowingUser && Boolean(currentPosition);
@@ -477,6 +480,23 @@ function LiveTrackingScreen({
   function submitReport(label: string) {
     onNotice(`${label} report saved for this session.`);
     setReportOpen(false);
+  }
+
+  function startSheetDrag(event: PointerEvent<HTMLButtonElement>) {
+    sheetDragStartRef.current = event.clientY;
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function finishSheetDrag(event: PointerEvent<HTMLButtonElement>) {
+    const startY = sheetDragStartRef.current;
+    sheetDragStartRef.current = null;
+    if (startY === null) return;
+
+    const deltaY = event.clientY - startY;
+    if (Math.abs(deltaY) < 18) return;
+
+    sheetDraggedRef.current = true;
+    setDetailsCollapsed(deltaY > 0);
   }
 
   return (
@@ -556,7 +576,29 @@ function LiveTrackingScreen({
         </div>
       ) : null}
 
-      <section className="absolute bottom-0 left-0 right-0 z-20 rounded-t-[28px] border-t border-black/10 bg-white px-4 pb-[calc(env(safe-area-inset-bottom)+16px)] pt-4 text-[#111318] shadow-[0_-16px_34px_rgba(0,0,0,0.18)] lg:left-auto lg:right-5 lg:bottom-5 lg:w-[430px] lg:rounded-[28px] lg:border lg:border-white/10">
+      <section className={cn(
+        "absolute bottom-0 left-0 right-0 z-20 rounded-t-[28px] border-t border-black/10 bg-white px-4 pb-[calc(env(safe-area-inset-bottom)+16px)] pt-2 text-[#111318] shadow-[0_-16px_34px_rgba(0,0,0,0.18)] transition-transform duration-300 ease-out will-change-transform lg:left-auto lg:right-5 lg:bottom-5 lg:w-[430px] lg:rounded-[28px] lg:border lg:border-white/10 lg:pt-4 lg:transition-none",
+        detailsCollapsed && "translate-y-[calc(100%-142px)] lg:translate-y-0"
+      )}>
+        <button
+          type="button"
+          className="mx-auto mb-2 flex h-7 w-20 items-center justify-center rounded-full lg:hidden"
+          onPointerDown={startSheetDrag}
+          onPointerUp={finishSheetDrag}
+          onClick={() => {
+            if (sheetDraggedRef.current) {
+              sheetDraggedRef.current = false;
+              return;
+            }
+            setDetailsCollapsed((collapsed) => !collapsed);
+          }}
+          onPointerCancel={() => {
+            sheetDragStartRef.current = null;
+          }}
+          aria-label={detailsCollapsed ? "Expand commute details" : "Collapse commute details"}
+        >
+          <span className="h-1.5 w-12 rounded-full bg-black/15" />
+        </button>
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-xs font-bold uppercase tracking-[0.08em] text-black/42">{bottomTitle(trackingStatus)}</p>
@@ -574,13 +616,13 @@ function LiveTrackingScreen({
           <MetricCell label="Arrival" value={arrivalTime} />
           <MetricCell label="Remain" value={remainingKm ? `${remainingKm.toFixed(1)} km` : "--"} />
         </div>
-        <div className="mt-2 grid grid-cols-3 gap-2 text-center">
+        <div className={cn("mt-2 grid grid-cols-3 gap-2 text-center", detailsCollapsed && "hidden lg:grid")}>
           <MetricCell label="Elapsed" value={formatDuration(elapsedSeconds)} muted />
           <MetricCell label="Tracked" value={formatDistanceMeters(trackedDistanceMeters)} muted />
           <MetricCell label="Accuracy" value={formatAccuracy(currentPosition?.accuracy)} muted />
         </div>
 
-        <div className="mt-4 rounded-2xl bg-black/[0.045] p-3">
+        <div className={cn("mt-4 rounded-2xl bg-black/[0.045] p-3", detailsCollapsed && "hidden lg:block")}>
           <div className="flex items-center justify-between gap-3">
             <p className="text-[11px] font-black uppercase tracking-[0.08em] text-black/42">Street directions</p>
             <span className="text-[11px] font-bold text-black/42">{directionsProvider ?? "Routing"}</span>
@@ -606,7 +648,7 @@ function LiveTrackingScreen({
           )}
         </div>
 
-        <div className="mt-4 grid grid-cols-[1fr_auto_auto] gap-2">
+        <div className={cn("mt-4 grid grid-cols-[1fr_auto_auto] gap-2", detailsCollapsed && "hidden lg:grid")}>
           <select className="h-11 min-w-0 rounded-2xl border border-black/10 bg-black/[0.04] px-3 text-sm font-semibold outline-none" value={routeId} onChange={(event) => onRouteChange(event.target.value)} disabled={isActive}>
             <option value="">No route selected</option>
             {routes.map((item) => <option key={item.id} value={item.id}>{item.route_name}</option>)}
@@ -623,7 +665,7 @@ function LiveTrackingScreen({
           ) : null}
         </div>
 
-        <div className="mt-3">
+        <div className={cn("mt-3", detailsCollapsed && "hidden lg:block")}>
           <TrackingAction
             status={trackingStatus}
             savingSummary={savingSummary}
@@ -635,13 +677,13 @@ function LiveTrackingScreen({
           />
         </div>
 
-        <p className="mt-3 text-xs font-semibold text-black/45">
+        <p className={cn("mt-3 text-xs font-semibold text-black/45", detailsCollapsed && "hidden lg:block")}>
           Your location is only tracked while this commute session is active. ETA uses saved route time scaled by remaining distance.
         </p>
-        {heading !== null ? <p className="mt-1 text-xs font-semibold text-black/40">Heading {Math.round(heading)} degrees.</p> : null}
-        {saving ? <p className="mt-2 text-xs font-bold text-teal">Saving latest point...</p> : null}
-        {notice ? <p className="mt-2 rounded-2xl bg-black/[0.05] p-2 text-xs font-bold text-black/58">{notice}</p> : null}
-        {errorMessage ? <p className="mt-2 rounded-2xl border border-[var(--red-border)] bg-[var(--red-soft)] p-2 text-xs font-bold text-red">{errorMessage}</p> : null}
+        {heading !== null ? <p className={cn("mt-1 text-xs font-semibold text-black/40", detailsCollapsed && "hidden lg:block")}>Heading {Math.round(heading)} degrees.</p> : null}
+        {saving ? <p className={cn("mt-2 text-xs font-bold text-teal", detailsCollapsed && "hidden lg:block")}>Saving latest point...</p> : null}
+        {notice ? <p className={cn("mt-2 rounded-2xl bg-black/[0.05] p-2 text-xs font-bold text-black/58", detailsCollapsed && "hidden lg:block")}>{notice}</p> : null}
+        {errorMessage ? <p className={cn("mt-2 rounded-2xl border border-[var(--red-border)] bg-[var(--red-soft)] p-2 text-xs font-bold text-red", detailsCollapsed && "hidden lg:block")}>{errorMessage}</p> : null}
       </section>
     </div>
   );

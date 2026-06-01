@@ -25,6 +25,8 @@ export function MetricCard({
   icon?: LucideIcon;
   className?: string;
 }) {
+  const hasLongValue = value.length > 7;
+
   return (
     <div className={cn("relative min-w-0 overflow-hidden rounded-[18px] border border-white/[0.055] bg-surface p-4 sm:rounded-[20px] sm:p-5", className)}>
       <div className="absolute -right-6 -top-6 size-20 rounded-full bg-white/[0.025] sm:size-24" />
@@ -34,8 +36,8 @@ export function MetricCard({
         </div>
       ) : null}
       <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-white/35 sm:text-xs sm:tracking-[0.08em]">{label}</p>
-      <p className="mt-2 min-w-0 truncate font-heading text-[1.9rem] font-black leading-none text-white sm:text-4xl">{value}</p>
-      <p className={cn("mt-2 truncate text-[11px] font-semibold sm:text-xs", tone === "red" ? "text-red" : tone === "amber" ? "text-amber" : tone === "teal" ? "text-teal" : "text-blue")}>
+      <p className={cn("mt-2 min-w-0 break-words font-heading font-black leading-[0.96] text-white", hasLongValue ? "text-[1.75rem] sm:text-4xl" : "text-[1.9rem] sm:text-4xl")}>{value}</p>
+      <p className={cn("mt-2 min-w-0 break-words text-[11px] font-semibold leading-snug sm:text-xs", tone === "red" ? "text-red" : tone === "amber" ? "text-amber" : tone === "teal" ? "text-teal" : "text-blue")}>
         {sub}
       </p>
     </div>

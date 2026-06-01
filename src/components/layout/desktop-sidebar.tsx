@@ -74,12 +74,6 @@ export function DesktopSidebar() {
             );
           })}
         </div>
-        <div className="mt-5 flex items-center gap-2 rounded-2xl border border-[var(--amber-border)] bg-[var(--amber-soft)] px-3 py-3">
-          <span className="size-2 rounded-full bg-amber" />
-          <p className="text-xs text-white/45">
-            Pipeline <b className="text-amber">partial</b>
-          </p>
-        </div>
       </nav>
 
       <div className="border-t border-white/[0.05] p-3">
