@@ -267,9 +267,12 @@ export function AddressSearch({
   );
 }
 
-export function toggleMode(current: PreferredMode[], mode: PreferredMode) {
+export function toggleMode(current: PreferredMode[], mode: PreferredMode): PreferredMode[] {
+  if (mode === "Mixed") return ["Mixed"];
+  const withoutMixed = current.filter((item) => item !== "Mixed");
+
   if (current.includes(mode)) {
-    return current.length === 1 ? current : current.filter((item) => item !== mode);
+    return withoutMixed.length === 1 ? current : withoutMixed.filter((item) => item !== mode);
   }
-  return [...current, mode];
+  return [...withoutMixed, mode];
 }

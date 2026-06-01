@@ -45,6 +45,7 @@ export function RouteLogForm({
   const [error, setError] = useState<string | null>(null);
   const availableRoutes = useMemo(() => routes, [routes]);
   const selectedRoute = availableRoutes.find((route) => route.id === routeId) ?? availableRoutes[0];
+  const canSaveNewRoute = newRouteName.trim().length >= 2 && newOriginName.trim().length >= 3 && newDestinationName.trim().length >= 3;
 
   useEffect(() => {
     if (openSignal === undefined) return;
@@ -197,6 +198,9 @@ export function RouteLogForm({
                       setNewDestinationName(result.name);
                     }}
                   />
+                  <p className="text-xs leading-5 text-white/42 md:col-span-2">
+                    Search and choose a result for best accuracy. You can still save typed addresses and Kalakbay will try to locate them.
+                  </p>
                 </div>
               )}
               <div>
@@ -214,7 +218,7 @@ export function RouteLogForm({
                   ))}
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                   <Label>Travel date</Label>
                   <Input className="mt-2" type="date" value={travelDate} onChange={(event) => setTravelDate(event.target.value)} required />
@@ -254,7 +258,7 @@ export function RouteLogForm({
                 <Textarea className="mt-2" placeholder="Rain, crowding, delays, transfer notes..." value={notes} onChange={(event) => setNotes(event.target.value)} />
               </div>
               {error ? <p className="rounded-2xl border border-[var(--red-border)] bg-[var(--red-soft)] p-3 text-sm text-red">{error}</p> : null}
-              <Button className="w-full" disabled={saving || (routeSource === "saved" && !availableRoutes.length) || (routeSource === "new" && (!newOrigin || !newDestination || !newRouteName.trim()))}>{saving ? "Saving..." : "Save Log"}</Button>
+              <Button className="w-full" disabled={saving || (routeSource === "saved" && !availableRoutes.length) || (routeSource === "new" && !canSaveNewRoute)}>{saving ? "Saving..." : "Save Log"}</Button>
             </div>
           </form>
         </div>
