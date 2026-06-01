@@ -26,16 +26,16 @@ export function MetricCard({
   className?: string;
 }) {
   return (
-    <div className={cn("relative overflow-hidden rounded-[20px] border border-white/[0.055] bg-surface p-5", className)}>
-      <div className="absolute -right-6 -top-6 size-24 rounded-full bg-white/[0.025]" />
+    <div className={cn("relative min-w-0 overflow-hidden rounded-[18px] border border-white/[0.055] bg-surface p-4 sm:rounded-[20px] sm:p-5", className)}>
+      <div className="absolute -right-6 -top-6 size-20 rounded-full bg-white/[0.025] sm:size-24" />
       {Icon ? (
-        <div className={cn("mb-4 flex size-10 items-center justify-center rounded-[14px] border", toneClasses[tone])}>
-          <Icon className="size-5" />
+        <div className={cn("mb-4 flex size-9 items-center justify-center rounded-[13px] border sm:size-10 sm:rounded-[14px]", toneClasses[tone])}>
+          <Icon className="size-4 sm:size-5" />
         </div>
       ) : null}
-      <p className="text-xs font-bold uppercase tracking-[0.08em] text-white/35">{label}</p>
-      <p className="mt-2 font-heading text-4xl font-black leading-none text-white">{value}</p>
-      <p className={cn("mt-2 text-xs font-semibold", tone === "red" ? "text-red" : tone === "amber" ? "text-amber" : tone === "teal" ? "text-teal" : "text-blue")}>
+      <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-white/35 sm:text-xs sm:tracking-[0.08em]">{label}</p>
+      <p className="mt-2 min-w-0 truncate font-heading text-[1.9rem] font-black leading-none text-white sm:text-4xl">{value}</p>
+      <p className={cn("mt-2 truncate text-[11px] font-semibold sm:text-xs", tone === "red" ? "text-red" : tone === "amber" ? "text-amber" : tone === "teal" ? "text-teal" : "text-blue")}>
         {sub}
       </p>
     </div>

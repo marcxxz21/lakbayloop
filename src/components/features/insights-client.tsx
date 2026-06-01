@@ -35,8 +35,8 @@ export function InsightsClient() {
         <h1 className="font-heading text-3xl font-black">Insights</h1>
       </header>
       {error ? <p className="rounded-2xl border border-[var(--red-border)] bg-[var(--red-soft)] p-3 text-sm text-red">{error}</p> : null}
-      <div className="grid grid-cols-2 gap-3">
-        {metrics.slice(0, 4).map((metric) => <MetricCard key={metric.label} {...metric} />)}
+      <div className="grid grid-cols-2 gap-2.5">
+        {metrics.slice(0, 4).map((metric) => <MetricCard key={metric.label} {...metric} className="min-h-[172px]" />)}
       </div>
       <CommuteDurationChart data={data?.durationTrend} />
       <RouteUsageChart data={data?.routeUsage} />

@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Crosshair, ExternalLink, MapPin, Navigation, Pause, Play, Radar, Route } from "lucide-react";
+import { Crosshair, ExternalLink, LocateFixed, MapPin, Navigation, Pause, Play } from "lucide-react";
 import { ResponsiveShell } from "@/components/layout/responsive-shell";
 import { Button } from "@/components/ui/button";
-import { DarkCard } from "@/components/ui-custom/dark-card";
-import { MetricCard } from "@/components/ui-custom/metric-card";
 import { apiFetch } from "@/lib/api-client";
+import { calculateDistanceKm } from "@/lib/commute-calculations";
 import type { SavedRoute, TrackingPoint } from "@/lib/types";
 
 type TrackingResponse = { points: TrackingPoint[] };
@@ -124,72 +123,22 @@ export function TrackingClient() {
     : null;
 
   const content = (
-    <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
-      <section className="min-w-0 space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <select
-            className="h-11 min-w-64 rounded-2xl border border-white/[0.08] bg-surface-soft px-4 text-sm text-white outline-none"
-            value={routeId}
-            onChange={(event) => setRouteId(event.target.value)}
-          >
-            <option value="">No route selected</option>
-            {routes.map((route) => <option key={route.id} value={route.id}>{route.route_name}</option>)}
-          </select>
-          <div className="flex gap-2">
-            <Button variant="secondary" onClick={load}>
-              <Crosshair className="size-4" />
-              Refresh
-            </Button>
-            {tracking ? (
-              <Button variant="secondary" onClick={stopTracking}>
-                <Pause className="size-4" />
-                Stop
-              </Button>
-            ) : (
-              <Button onClick={startTracking}>
-                <Play className="size-4" />
-                Start Tracking
-              </Button>
-            )}
-          </div>
-        </div>
-        {error ? <p className="rounded-2xl border border-[var(--red-border)] bg-[var(--red-soft)] p-3 text-sm text-red">{error}</p> : null}
-        {latestRoute && routeMapAvailable ? <RouteTrackerMap route={latestRoute} points={routePoints} current={mapPoint} /> : null}
-        <div className="overflow-hidden rounded-[22px] border border-white/[0.08] bg-surface">
-          <iframe
-            title="Realtime commute map"
-            src={mapSrc}
-            className="h-[360px] w-full border-0 xl:h-[420px]"
-            loading="lazy"
-          />
-        </div>
-      </section>
-      <aside className="space-y-4">
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
-          <MetricCard label="Tracker" value={tracking ? "Live" : "Idle"} sub={saving ? "Saving point..." : "Geolocation watch"} tone={tracking ? "teal" : "blue"} icon={Radar} />
-          <MetricCard label="Points" value={String(points.length)} sub="Recent samples" tone="amber" icon={MapPin} />
-          <MetricCard label="Route" value={routeMapAvailable ? "Point to point" : "Location"} sub={latestRoute?.estimated_minutes ? `${latestRoute.estimated_minutes} min estimate` : "Select a saved route"} tone="teal" icon={Route} />
-        </div>
-        <DarkCard className="p-5">
-          <p className="text-xs font-bold uppercase tracking-[0.08em] text-white/35">Current route</p>
-          <h2 className="mt-2 font-heading text-2xl font-black">{latestRoute?.route_name ?? "Realtime location"}</h2>
-          <div className="mt-5 space-y-3 text-sm text-white/62">
-            <div className="flex justify-between rounded-2xl bg-white/[0.035] p-3"><span>Latitude</span><b className="text-white">{lat.toFixed(5)}</b></div>
-            <div className="flex justify-between rounded-2xl bg-white/[0.035] p-3"><span>Longitude</span><b className="text-white">{lng.toFixed(5)}</b></div>
-            <div className="flex justify-between rounded-2xl bg-white/[0.035] p-3"><span>Accuracy</span><b className="text-white">{mapPoint?.accuracy_m ? `${Math.round(mapPoint.accuracy_m)}m` : "Unknown"}</b></div>
-            <div className="flex justify-between rounded-2xl bg-white/[0.035] p-3"><span>Updated</span><b className="text-white">{mapPoint ? new Date(mapPoint.recorded_at).toLocaleTimeString() : "Waiting"}</b></div>
-          </div>
-          {directionsUrl ? (
-            <Button variant="secondary" className="mt-5 w-full" asChild>
-              <a href={directionsUrl} target="_blank" rel="noreferrer">
-                <ExternalLink className="size-4" />
-                Open directions
-              </a>
-            </Button>
-          ) : null}
-        </DarkCard>
-      </aside>
-    </div>
+    <NavigationMap
+      routes={routes}
+      routeId={routeId}
+      onRouteChange={setRouteId}
+      route={latestRoute}
+      points={routePoints}
+      current={mapPoint}
+      mapSrc={mapSrc}
+      tracking={tracking}
+      saving={saving}
+      error={error}
+      directionsUrl={directionsUrl}
+      onRefresh={load}
+      onStart={startTracking}
+      onStop={stopTracking}
+    />
   );
 
   const mobile = (
@@ -209,80 +158,164 @@ export function TrackingClient() {
   );
 }
 
-function RouteTrackerMap({
+function NavigationMap({
+  routes,
+  routeId,
+  onRouteChange,
   route,
   points,
-  current
+  current,
+  mapSrc,
+  tracking,
+  saving,
+  error,
+  directionsUrl,
+  onRefresh,
+  onStart,
+  onStop
 }: {
-  route: SavedRoute;
+  routes: SavedRoute[];
+  routeId: string;
+  onRouteChange: (routeId: string) => void;
+  route?: SavedRoute;
   points: TrackingPoint[];
+  mapSrc: string;
   current: TrackingPoint | null;
+  tracking: boolean;
+  saving: boolean;
+  error: string | null;
+  directionsUrl: string | null;
+  onRefresh: () => void;
+  onStart: () => void;
+  onStop: () => void;
 }) {
-  const origin = { lat: Number(route.origin_lat), lng: Number(route.origin_lng) };
-  const destination = { lat: Number(route.destination_lat), lng: Number(route.destination_lng) };
+  const routeMapAvailable = Boolean(route?.origin_lat && route?.origin_lng && route?.destination_lat && route?.destination_lng);
+  const origin = routeMapAvailable ? { lat: Number(route?.origin_lat), lng: Number(route?.origin_lng) } : null;
+  const destination = routeMapAvailable ? { lat: Number(route?.destination_lat), lng: Number(route?.destination_lng) } : null;
   const trackedPoints = points
     .slice()
     .reverse()
     .map((point) => ({ lat: Number(point.latitude), lng: Number(point.longitude) }));
   const currentPoint = current ? { lat: Number(current.latitude), lng: Number(current.longitude) } : null;
-  const allPoints = [origin, destination, ...trackedPoints, ...(currentPoint ? [currentPoint] : [])];
-  const minLat = Math.min(...allPoints.map((point) => point.lat));
-  const maxLat = Math.max(...allPoints.map((point) => point.lat));
-  const minLng = Math.min(...allPoints.map((point) => point.lng));
-  const maxLng = Math.max(...allPoints.map((point) => point.lng));
+  const fallbackPoint = { lat: 14.5995, lng: 120.9842 };
+  const allPoints = [origin, destination, ...trackedPoints, currentPoint].filter(Boolean) as Array<{ lat: number; lng: number }>;
+  const plottedPoints = allPoints.length ? allPoints : [fallbackPoint];
+  const minLat = Math.min(...plottedPoints.map((point) => point.lat));
+  const maxLat = Math.max(...plottedPoints.map((point) => point.lat));
+  const minLng = Math.min(...plottedPoints.map((point) => point.lng));
+  const maxLng = Math.max(...plottedPoints.map((point) => point.lng));
   const latSpan = Math.max(maxLat - minLat, 0.003);
   const lngSpan = Math.max(maxLng - minLng, 0.003);
+  const remainingKm = currentPoint && destination
+    ? calculateDistanceKm(currentPoint.lat, currentPoint.lng, destination.lat, destination.lng)
+    : Number(route?.distance_km ?? 0);
+  const etaMinutes = currentPoint && destination && route?.distance_km
+    ? Math.max(1, Math.round((remainingKm / Math.max(Number(route.distance_km), 1)) * route.estimated_minutes))
+    : route?.estimated_minutes ?? 0;
 
   function project(point: { lat: number; lng: number }) {
-    const x = 52 + ((point.lng - minLng) / lngSpan) * 636;
-    const y = 358 - ((point.lat - minLat) / latSpan) * 276;
+    const x = 8 + ((point.lng - minLng) / lngSpan) * 84;
+    const y = 88 - ((point.lat - minLat) / latSpan) * 76;
     return { x, y };
   }
 
-  const start = project(origin);
-  const end = project(destination);
-  const routeLine = `M ${start.x} ${start.y} C ${(start.x + end.x) / 2} ${start.y - 80}, ${(start.x + end.x) / 2} ${end.y + 80}, ${end.x} ${end.y}`;
+  const start = origin ? project(origin) : null;
+  const end = destination ? project(destination) : null;
+  const routeLine = start && end ? `M ${start.x} ${start.y} C ${(start.x + end.x) / 2} ${start.y - 18}, ${(start.x + end.x) / 2} ${end.y + 18}, ${end.x} ${end.y}` : "";
   const sampledLine = trackedPoints.map(project).map((point) => `${point.x},${point.y}`).join(" ");
   const livePoint = currentPoint ? project(currentPoint) : null;
 
   return (
-    <div className="overflow-hidden rounded-[22px] border border-white/[0.08] bg-surface">
-      <div className="border-b border-white/[0.06] px-5 py-4">
-        <p className="text-xs font-bold uppercase tracking-[0.08em] text-white/35">Point to point route</p>
-        <h2 className="mt-1 font-heading text-xl font-black">{route.origin_name} to {route.destination_name}</h2>
-      </div>
-      <svg viewBox="0 0 740 420" className="h-[460px] w-full bg-[#080b10]" role="img" aria-label={`${route.route_name} point to point route`}>
+    <div className="relative min-h-[calc(100svh-150px)] overflow-hidden rounded-[28px] border border-white/[0.08] bg-surface shadow-panel lg:min-h-[720px]">
+      <iframe title="Realtime commute map" src={mapSrc} className="absolute inset-0 h-full w-full border-0" loading="lazy" />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(5,6,8,0.72),rgba(5,6,8,0.08)_32%,rgba(5,6,8,0.08)_56%,rgba(5,6,8,0.86))]" />
+      <svg viewBox="0 0 100 100" className="pointer-events-none absolute inset-0 h-full w-full" aria-label={route ? `${route.route_name} navigation route` : "Realtime location map"}>
         <defs>
-          <pattern id="trackingGrid" width="34" height="34" patternUnits="userSpaceOnUse">
-            <path d="M 34 0 L 0 0 0 34" fill="none" stroke="rgba(255,255,255,0.045)" strokeWidth="1" />
-          </pattern>
-          <linearGradient id="trackingRoute" x1="0" x2="1">
+          <linearGradient id="navigationRoute" x1="0" x2="1">
             <stop offset="0%" stopColor="#3ec9a7" />
-            <stop offset="58%" stopColor="#5b8ef0" />
+            <stop offset="62%" stopColor="#5b8ef0" />
             <stop offset="100%" stopColor="#e8a84c" />
           </linearGradient>
         </defs>
-        <rect width="740" height="420" fill="url(#trackingGrid)" />
-        <path d={routeLine} fill="none" stroke="rgba(255,255,255,0.14)" strokeWidth="18" strokeLinecap="round" />
-        <path d={routeLine} fill="none" stroke="url(#trackingRoute)" strokeWidth="6" strokeLinecap="round" />
-        {sampledLine ? <polyline points={sampledLine} fill="none" stroke="#ffffff" strokeOpacity="0.72" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /> : null}
-        <circle cx={start.x} cy={start.y} r="15" fill="rgba(62,201,167,0.18)" stroke="#3ec9a7" strokeWidth="3" />
-        <circle cx={end.x} cy={end.y} r="15" fill="rgba(232,168,76,0.18)" stroke="#e8a84c" strokeWidth="3" />
+        {routeLine ? <path d={routeLine} fill="none" stroke="rgba(8,11,16,0.58)" strokeWidth="4.8" strokeLinecap="round" /> : null}
+        {routeLine ? <path d={routeLine} fill="none" stroke="url(#navigationRoute)" strokeWidth="2.4" strokeLinecap="round" /> : null}
+        {sampledLine ? <polyline points={sampledLine} fill="none" stroke="white" strokeOpacity="0.82" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /> : null}
+        {start ? <circle cx={start.x} cy={start.y} r="2.3" fill="#3ec9a7" stroke="#071016" strokeWidth="1.1" /> : null}
+        {end ? <circle cx={end.x} cy={end.y} r="2.3" fill="#e8a84c" stroke="#071016" strokeWidth="1.1" /> : null}
         {livePoint ? (
           <>
-            <circle cx={livePoint.x} cy={livePoint.y} r="22" fill="rgba(91,142,240,0.14)" />
-            <circle cx={livePoint.x} cy={livePoint.y} r="8" fill="#5b8ef0" stroke="white" strokeWidth="2" />
+            <circle cx={livePoint.x} cy={livePoint.y} r="5" fill="rgba(91,142,240,0.22)" />
+            <circle cx={livePoint.x} cy={livePoint.y} r="2.5" fill="#5b8ef0" stroke="white" strokeWidth="0.9" />
           </>
         ) : null}
-        <g transform={`translate(${Math.min(start.x + 18, 540)} ${Math.max(start.y - 18, 34)})`}>
-          <rect width="128" height="34" rx="17" fill="rgba(8,11,16,0.78)" stroke="rgba(255,255,255,0.1)" />
-          <text x="14" y="22" fill="white" fontSize="13" fontWeight="700">Start</text>
-        </g>
-        <g transform={`translate(${Math.min(end.x + 18, 540)} ${Math.max(end.y - 18, 34)})`}>
-          <rect width="128" height="34" rx="17" fill="rgba(8,11,16,0.78)" stroke="rgba(255,255,255,0.1)" />
-          <text x="14" y="22" fill="white" fontSize="13" fontWeight="700">End</text>
-        </g>
       </svg>
+      <div className="absolute left-3 right-3 top-3 space-y-2 sm:left-4 sm:right-4 sm:top-4">
+        <div className="rounded-[22px] border border-white/10 bg-[#080b10]/88 p-3 shadow-panel backdrop-blur-xl">
+          <div className="flex items-center gap-2">
+            <select className="h-10 min-w-0 flex-1 rounded-2xl border border-white/[0.08] bg-white/[0.06] px-3 text-sm text-white outline-none" value={routeId} onChange={(event) => onRouteChange(event.target.value)}>
+              <option value="">No route selected</option>
+              {routes.map((item) => <option key={item.id} value={item.id}>{item.route_name}</option>)}
+            </select>
+            <Button variant="secondary" size="icon" onClick={onRefresh} aria-label="Refresh tracking">
+              <Crosshair className="size-4" />
+            </Button>
+          </div>
+          {error ? <p className="mt-2 rounded-2xl border border-[var(--red-border)] bg-[var(--red-soft)] p-2 text-xs text-red">{error}</p> : null}
+        </div>
+      </div>
+      <div className="absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4">
+        <div className="rounded-[28px] border border-white/10 bg-[#080b10]/92 p-4 shadow-panel backdrop-blur-2xl">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.08em] text-white/38">
+                <Navigation className="size-3.5 text-blue" />
+                {tracking ? "Live navigation" : "Route preview"}
+              </p>
+              <h2 className="mt-1 truncate font-heading text-xl font-black text-white">{route?.route_name ?? "Realtime location"}</h2>
+              <p className="mt-1 truncate text-xs text-white/46">{route?.origin_name ?? "Choose a route"} {route ? "to" : ""} {route?.destination_name ?? ""}</p>
+            </div>
+            <div className="rounded-2xl bg-white text-[#080A0F] px-4 py-2 text-right">
+              <p className="font-heading text-2xl font-black leading-none">{etaMinutes || "--"}m</p>
+              <p className="mt-1 text-[10px] font-bold uppercase text-black/50">ETA</p>
+            </div>
+          </div>
+          <div className="mt-4 grid grid-cols-3 gap-2">
+            <div className="rounded-2xl bg-white/[0.055] p-3">
+              <p className="text-[11px] text-white/38">Remaining</p>
+              <p className="mt-1 font-heading text-base font-black">{remainingKm ? `${remainingKm.toFixed(1)} km` : "--"}</p>
+            </div>
+            <div className="rounded-2xl bg-white/[0.055] p-3">
+              <p className="text-[11px] text-white/38">Accuracy</p>
+              <p className="mt-1 font-heading text-base font-black">{current?.accuracy_m ? `${Math.round(Number(current.accuracy_m))}m` : "--"}</p>
+            </div>
+            <div className="rounded-2xl bg-white/[0.055] p-3">
+              <p className="text-[11px] text-white/38">Points</p>
+              <p className="mt-1 font-heading text-base font-black">{points.length}</p>
+            </div>
+          </div>
+          <div className="mt-4 grid grid-cols-[1fr_auto] gap-2">
+            {tracking ? (
+              <Button variant="secondary" onClick={onStop}>
+                <Pause className="size-4" />
+                Stop tracking
+              </Button>
+            ) : (
+              <Button onClick={onStart}>
+                <LocateFixed className="size-4" />
+                Start tracking
+              </Button>
+            )}
+            {directionsUrl ? (
+              <Button variant="secondary" size="icon" asChild>
+                <a href={directionsUrl} target="_blank" rel="noreferrer" aria-label="Open directions">
+                  <ExternalLink className="size-4" />
+                </a>
+              </Button>
+            ) : null}
+          </div>
+          {saving ? <p className="mt-3 text-xs font-semibold text-teal">Saving latest point...</p> : null}
+        </div>
+      </div>
     </div>
   );
 }
