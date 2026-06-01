@@ -8,11 +8,13 @@ export function ResponsiveShell({
   title,
   subtitle,
   mobile,
+  mobileFullScreen = false,
   children
 }: {
   title: string;
   subtitle: string;
   mobile?: React.ReactNode;
+  mobileFullScreen?: boolean;
   children: React.ReactNode;
 }) {
   const [isDesktop, setIsDesktop] = useState<boolean | null>(null);
@@ -36,6 +38,6 @@ export function ResponsiveShell({
   }
 
   return (
-    <MobileAppShell>{mobile ?? children}</MobileAppShell>
+    <MobileAppShell fullScreen={mobileFullScreen}>{mobile ?? children}</MobileAppShell>
   );
 }

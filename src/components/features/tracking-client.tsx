@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Crosshair, ExternalLink, LocateFixed, MapPin, Navigation, Pause, Play } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { AlertTriangle, ChevronLeft, Crosshair, ExternalLink, LocateFixed, Navigation, Pause, Volume2 } from "lucide-react";
 import { ResponsiveShell } from "@/components/layout/responsive-shell";
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api-client";
@@ -100,24 +100,6 @@ export function TrackingClient() {
     latestRoute?.destination_lng
   );
   const mapPoint = current ?? routePoints[0] ?? points[0];
-  const lat = Number(mapPoint?.latitude ?? latestRoute?.origin_lat ?? process.env.NEXT_PUBLIC_DEFAULT_MAP_LAT ?? 14.5995);
-  const lng = Number(mapPoint?.longitude ?? latestRoute?.origin_lng ?? process.env.NEXT_PUBLIC_DEFAULT_MAP_LNG ?? 120.9842);
-  const mapSrc = useMemo(() => {
-    const base = process.env.NEXT_PUBLIC_OSM_EMBED_BASE ?? "https://www.openstreetmap.org/export/embed.html";
-    const routeLats = routeMapAvailable ? [Number(latestRoute?.origin_lat), Number(latestRoute?.destination_lat)] : [lat];
-    const routeLngs = routeMapAvailable ? [Number(latestRoute?.origin_lng), Number(latestRoute?.destination_lng)] : [lng];
-    const minLat = Math.min(lat, ...routeLats);
-    const maxLat = Math.max(lat, ...routeLats);
-    const minLng = Math.min(lng, ...routeLngs);
-    const maxLng = Math.max(lng, ...routeLngs);
-    const pad = 0.01;
-    const params = new URLSearchParams({
-      bbox: `${minLng - pad},${minLat - pad},${maxLng + pad},${maxLat + pad}`,
-      layer: "mapnik",
-      marker: `${lat},${lng}`
-    });
-    return `${base}?${params.toString()}`;
-  }, [lat, latestRoute?.destination_lat, latestRoute?.destination_lng, latestRoute?.origin_lat, latestRoute?.origin_lng, lng, routeMapAvailable]);
   const directionsUrl = latestRoute && routeMapAvailable
     ? `https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route=${latestRoute.origin_lat}%2C${latestRoute.origin_lng}%3B${latestRoute.destination_lat}%2C${latestRoute.destination_lng}`
     : null;
@@ -130,7 +112,6 @@ export function TrackingClient() {
       route={latestRoute}
       points={routePoints}
       current={mapPoint}
-      mapSrc={mapSrc}
       tracking={tracking}
       saving={saving}
       error={error}
@@ -141,18 +122,10 @@ export function TrackingClient() {
     />
   );
 
-  const mobile = (
-    <div className="space-y-5">
-      <header>
-        <p className="text-sm text-white/38">Realtime commute</p>
-        <h1 className="font-heading text-3xl font-black">Tracking</h1>
-      </header>
-      {content}
-    </div>
-  );
+  const mobile = content;
 
   return (
-    <ResponsiveShell title="Tracking" subtitle="Track live commute position and save location samples to Supabase." mobile={mobile}>
+    <ResponsiveShell title="Tracking" subtitle="Track live commute position and save location samples to Supabase." mobile={mobile} mobileFullScreen>
       {content}
     </ResponsiveShell>
   );
@@ -165,7 +138,6 @@ function NavigationMap({
   route,
   points,
   current,
-  mapSrc,
   tracking,
   saving,
   error,
@@ -179,7 +151,6 @@ function NavigationMap({
   onRouteChange: (routeId: string) => void;
   route?: SavedRoute;
   points: TrackingPoint[];
-  mapSrc: string;
   current: TrackingPoint | null;
   tracking: boolean;
   saving: boolean;
@@ -189,133 +160,175 @@ function NavigationMap({
   onStart: () => void;
   onStop: () => void;
 }) {
+  const [clockNow, setClockNow] = useState<number | null>(null);
   const routeMapAvailable = Boolean(route?.origin_lat && route?.origin_lng && route?.destination_lat && route?.destination_lng);
-  const origin = routeMapAvailable ? { lat: Number(route?.origin_lat), lng: Number(route?.origin_lng) } : null;
   const destination = routeMapAvailable ? { lat: Number(route?.destination_lat), lng: Number(route?.destination_lng) } : null;
-  const trackedPoints = points
-    .slice()
-    .reverse()
-    .map((point) => ({ lat: Number(point.latitude), lng: Number(point.longitude) }));
   const currentPoint = current ? { lat: Number(current.latitude), lng: Number(current.longitude) } : null;
-  const fallbackPoint = { lat: 14.5995, lng: 120.9842 };
-  const allPoints = [origin, destination, ...trackedPoints, currentPoint].filter(Boolean) as Array<{ lat: number; lng: number }>;
-  const plottedPoints = allPoints.length ? allPoints : [fallbackPoint];
-  const minLat = Math.min(...plottedPoints.map((point) => point.lat));
-  const maxLat = Math.max(...plottedPoints.map((point) => point.lat));
-  const minLng = Math.min(...plottedPoints.map((point) => point.lng));
-  const maxLng = Math.max(...plottedPoints.map((point) => point.lng));
-  const latSpan = Math.max(maxLat - minLat, 0.003);
-  const lngSpan = Math.max(maxLng - minLng, 0.003);
   const remainingKm = currentPoint && destination
     ? calculateDistanceKm(currentPoint.lat, currentPoint.lng, destination.lat, destination.lng)
     : Number(route?.distance_km ?? 0);
   const etaMinutes = currentPoint && destination && route?.distance_km
     ? Math.max(1, Math.round((remainingKm / Math.max(Number(route.distance_km), 1)) * route.estimated_minutes))
     : route?.estimated_minutes ?? 0;
+  const speedKmh = current?.speed_mps ? Math.max(0, Math.round(Number(current.speed_mps) * 3.6)) : estimateSpeedLabel(route?.preferred_mode);
+  const nextDistanceKm = Math.min(Math.max(remainingKm, 0.1), 0.3);
+  const arrivalTime = clockNow && etaMinutes ? new Date(clockNow + etaMinutes * 60000).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "--";
+  const destinationLabel = shortPlaceName(route?.destination_name ?? "destination");
+  const originLabel = shortPlaceName(route?.origin_name ?? "start");
+  const nextInstruction = route ? `Continue toward ${destinationLabel}` : "Choose a saved route";
 
-  function project(point: { lat: number; lng: number }) {
-    const x = 8 + ((point.lng - minLng) / lngSpan) * 84;
-    const y = 88 - ((point.lat - minLat) / latSpan) * 76;
-    return { x, y };
-  }
-
-  const start = origin ? project(origin) : null;
-  const end = destination ? project(destination) : null;
-  const routeLine = start && end ? `M ${start.x} ${start.y} C ${(start.x + end.x) / 2} ${start.y - 18}, ${(start.x + end.x) / 2} ${end.y + 18}, ${end.x} ${end.y}` : "";
-  const sampledLine = trackedPoints.map(project).map((point) => `${point.x},${point.y}`).join(" ");
-  const livePoint = currentPoint ? project(currentPoint) : null;
+  useEffect(() => {
+    setClockNow(Date.now());
+    const interval = window.setInterval(() => setClockNow(Date.now()), 30000);
+    return () => window.clearInterval(interval);
+  }, []);
 
   return (
-    <div className="relative min-h-[calc(100svh-150px)] overflow-hidden rounded-[28px] border border-white/[0.08] bg-surface shadow-panel lg:min-h-[720px]">
-      <iframe title="Realtime commute map" src={mapSrc} className="absolute inset-0 h-full w-full border-0" loading="lazy" />
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(5,6,8,0.72),rgba(5,6,8,0.08)_32%,rgba(5,6,8,0.08)_56%,rgba(5,6,8,0.86))]" />
-      <svg viewBox="0 0 100 100" className="pointer-events-none absolute inset-0 h-full w-full" aria-label={route ? `${route.route_name} navigation route` : "Realtime location map"}>
+    <div className="relative min-h-screen overflow-hidden bg-[#eef1f4] text-[#111318] lg:min-h-[720px] lg:rounded-[28px] lg:border lg:border-white/[0.08]">
+      <svg viewBox="0 0 390 680" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full" aria-label={route ? `${route.route_name} navigation map` : "Navigation map"}>
         <defs>
-          <linearGradient id="navigationRoute" x1="0" x2="1">
-            <stop offset="0%" stopColor="#3ec9a7" />
-            <stop offset="62%" stopColor="#5b8ef0" />
-            <stop offset="100%" stopColor="#e8a84c" />
-          </linearGradient>
+          <filter id="navShadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#0a0b0f" floodOpacity="0.22" />
+          </filter>
         </defs>
-        {routeLine ? <path d={routeLine} fill="none" stroke="rgba(8,11,16,0.58)" strokeWidth="4.8" strokeLinecap="round" /> : null}
-        {routeLine ? <path d={routeLine} fill="none" stroke="url(#navigationRoute)" strokeWidth="2.4" strokeLinecap="round" /> : null}
-        {sampledLine ? <polyline points={sampledLine} fill="none" stroke="white" strokeOpacity="0.82" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /> : null}
-        {start ? <circle cx={start.x} cy={start.y} r="2.3" fill="#3ec9a7" stroke="#071016" strokeWidth="1.1" /> : null}
-        {end ? <circle cx={end.x} cy={end.y} r="2.3" fill="#e8a84c" stroke="#071016" strokeWidth="1.1" /> : null}
-        {livePoint ? (
-          <>
-            <circle cx={livePoint.x} cy={livePoint.y} r="5" fill="rgba(91,142,240,0.22)" />
-            <circle cx={livePoint.x} cy={livePoint.y} r="2.5" fill="#5b8ef0" stroke="white" strokeWidth="0.9" />
-          </>
-        ) : null}
+        <rect width="390" height="680" fill="#eef1f4" />
+        <g stroke="#c6ccd4" strokeWidth="5" strokeLinecap="round">
+          <path d="M -20 92 H 420" />
+          <path d="M -20 176 H 420" />
+          <path d="M -20 272 H 420" />
+          <path d="M -20 366 H 420" />
+          <path d="M -20 514 H 420" />
+          <path d="M 54 -20 V 720" />
+          <path d="M 138 -20 V 720" />
+          <path d="M 254 -20 V 720" />
+          <path d="M 338 -20 V 720" />
+          <path d="M -20 638 C 78 590 116 594 196 626 S 312 666 420 622" />
+        </g>
+        <g stroke="#fafafa" strokeWidth="2" strokeLinecap="round" opacity="0.72">
+          <path d="M -20 92 H 420" />
+          <path d="M -20 176 H 420" />
+          <path d="M -20 272 H 420" />
+          <path d="M -20 366 H 420" />
+          <path d="M -20 514 H 420" />
+          <path d="M 54 -20 V 720" />
+          <path d="M 138 -20 V 720" />
+          <path d="M 254 -20 V 720" />
+          <path d="M 338 -20 V 720" />
+        </g>
+        <path d="M 195 600 L 195 426 L 254 426 L 254 270 L 138 270 L 138 146" fill="none" stroke="#2318c9" strokeWidth="18" strokeLinecap="round" strokeLinejoin="round" filter="url(#navShadow)" />
+        <path d="M 195 600 L 195 426 L 254 426 L 254 270 L 138 270 L 138 146" fill="none" stroke="#5c48ff" strokeWidth="11" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M 195 600 L 195 540" stroke="#48f0bd" strokeWidth="8" strokeLinecap="round" />
+        <path d="M 254 426 h-42" stroke="#fff" strokeWidth="5" strokeLinecap="round" />
+        <path d="M 214 418 l-10 8 l10 8" fill="none" stroke="#fff" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+        <g transform="translate(166 525)" filter="url(#navShadow)">
+          <path d="M29 0 L54 62 L31 52 L8 62 Z" fill="#12b8ff" stroke="#fff" strokeWidth="6" strokeLinejoin="round" />
+          <path d="M29 12 L41 46 L29 40 L17 46 Z" fill="#172033" opacity="0.42" />
+        </g>
+        <g transform="translate(110 250)">
+          <rect width="88" height="28" rx="14" fill="#5c48ff" />
+          <text x="44" y="18" textAnchor="middle" fill="white" fontSize="13" fontWeight="800">{destinationLabel.slice(0, 11)}</text>
+        </g>
+        <g transform="translate(166 588)">
+          <rect width="74" height="28" rx="14" fill="#5c48ff" />
+          <text x="37" y="18" textAnchor="middle" fill="white" fontSize="13" fontWeight="800">{originLabel.slice(0, 9)}</text>
+        </g>
       </svg>
-      <div className="absolute left-3 right-3 top-3 space-y-2 sm:left-4 sm:right-4 sm:top-4">
-        <div className="rounded-[22px] border border-white/10 bg-[#080b10]/88 p-3 shadow-panel backdrop-blur-xl">
-          <div className="flex items-center gap-2">
-            <select className="h-10 min-w-0 flex-1 rounded-2xl border border-white/[0.08] bg-white/[0.06] px-3 text-sm text-white outline-none" value={routeId} onChange={(event) => onRouteChange(event.target.value)}>
-              <option value="">No route selected</option>
-              {routes.map((item) => <option key={item.id} value={item.id}>{item.route_name}</option>)}
-            </select>
-            <Button variant="secondary" size="icon" onClick={onRefresh} aria-label="Refresh tracking">
-              <Crosshair className="size-4" />
-            </Button>
+
+      <div className="absolute left-0 right-0 top-0 bg-[#050608] px-4 pb-3 pt-[calc(env(safe-area-inset-top)+14px)] text-white shadow-[0_12px_28px_rgba(0,0,0,0.24)]">
+        <div className="flex items-center gap-3">
+          <button type="button" className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white/10" aria-label="Back">
+            <ChevronLeft className="size-6" />
+          </button>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <Navigation className="size-8 shrink-0 -rotate-45 text-white" />
+              <div className="min-w-0">
+                <p className="font-heading text-xl font-black leading-none">{nextDistanceKm.toFixed(1)} km</p>
+                <p className="mt-1 truncate text-sm font-bold text-blue">{nextInstruction}</p>
+              </div>
+            </div>
           </div>
-          {error ? <p className="mt-2 rounded-2xl border border-[var(--red-border)] bg-[var(--red-soft)] p-2 text-xs text-red">{error}</p> : null}
         </div>
       </div>
-      <div className="absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4">
-        <div className="rounded-[28px] border border-white/10 bg-[#080b10]/92 p-4 shadow-panel backdrop-blur-2xl">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.08em] text-white/38">
-                <Navigation className="size-3.5 text-blue" />
-                {tracking ? "Live navigation" : "Route preview"}
-              </p>
-              <h2 className="mt-1 truncate font-heading text-xl font-black text-white">{route?.route_name ?? "Realtime location"}</h2>
-              <p className="mt-1 truncate text-xs text-white/46">{route?.origin_name ?? "Choose a route"} {route ? "to" : ""} {route?.destination_name ?? ""}</p>
-            </div>
-            <div className="rounded-2xl bg-white text-[#080A0F] px-4 py-2 text-right">
-              <p className="font-heading text-2xl font-black leading-none">{etaMinutes || "--"}m</p>
-              <p className="mt-1 text-[10px] font-bold uppercase text-black/50">ETA</p>
-            </div>
+
+      <div className="absolute right-4 top-[calc(env(safe-area-inset-top)+112px)] grid gap-3">
+        <button type="button" className="flex size-11 items-center justify-center rounded-full bg-white text-[#20242a] shadow-panel" aria-label="Voice guidance">
+          <Volume2 className="size-5" />
+        </button>
+        <button type="button" className="flex size-11 items-center justify-center rounded-full bg-pink-500 text-white shadow-panel" aria-label="Report alert">
+          <AlertTriangle className="size-5" />
+        </button>
+      </div>
+
+      <div className="absolute bottom-[184px] left-5 flex size-14 flex-col items-center justify-center rounded-full border-4 border-[#2f363d] bg-[#45515c] text-white shadow-panel">
+        <span className="font-heading text-lg font-black leading-none">{speedKmh || 35}</span>
+        <span className="text-[10px] font-bold leading-none">km/h</span>
+      </div>
+
+      <div className="absolute bottom-[188px] right-5 flex size-14 items-center justify-center rounded-full bg-white text-[#111318] shadow-panel">
+        <AlertTriangle className="size-7 text-amber" />
+      </div>
+
+      <div className="absolute bottom-0 left-0 right-0 rounded-t-[26px] bg-white px-5 pb-[calc(env(safe-area-inset-bottom)+18px)] pt-4 text-[#111318] shadow-[0_-16px_34px_rgba(0,0,0,0.18)]">
+        <div className="grid grid-cols-3 items-center gap-2 text-center">
+          <div>
+            <p className="font-heading text-lg font-black">{etaMinutes || "--"} min</p>
+            <p className="mt-1 text-[11px] font-semibold text-black/45">ETA</p>
           </div>
-          <div className="mt-4 grid grid-cols-3 gap-2">
-            <div className="rounded-2xl bg-white/[0.055] p-3">
-              <p className="text-[11px] text-white/38">Remaining</p>
-              <p className="mt-1 font-heading text-base font-black">{remainingKm ? `${remainingKm.toFixed(1)} km` : "--"}</p>
-            </div>
-            <div className="rounded-2xl bg-white/[0.055] p-3">
-              <p className="text-[11px] text-white/38">Accuracy</p>
-              <p className="mt-1 font-heading text-base font-black">{current?.accuracy_m ? `${Math.round(Number(current.accuracy_m))}m` : "--"}</p>
-            </div>
-            <div className="rounded-2xl bg-white/[0.055] p-3">
-              <p className="text-[11px] text-white/38">Points</p>
-              <p className="mt-1 font-heading text-base font-black">{points.length}</p>
-            </div>
+          <div>
+            <p className="font-heading text-lg font-black">{arrivalTime}</p>
+            <p className="mt-1 text-[11px] font-semibold text-black/45">Arrival</p>
           </div>
-          <div className="mt-4 grid grid-cols-[1fr_auto] gap-2">
-            {tracking ? (
-              <Button variant="secondary" onClick={onStop}>
-                <Pause className="size-4" />
-                Stop tracking
-              </Button>
-            ) : (
-              <Button onClick={onStart}>
-                <LocateFixed className="size-4" />
-                Start tracking
-              </Button>
-            )}
-            {directionsUrl ? (
-              <Button variant="secondary" size="icon" asChild>
-                <a href={directionsUrl} target="_blank" rel="noreferrer" aria-label="Open directions">
-                  <ExternalLink className="size-4" />
-                </a>
-              </Button>
-            ) : null}
+          <div>
+            <p className="font-heading text-lg font-black">{remainingKm ? `${remainingKm.toFixed(1)} km` : "--"}</p>
+            <p className="mt-1 text-[11px] font-semibold text-black/45">Distance</p>
           </div>
-          {saving ? <p className="mt-3 text-xs font-semibold text-teal">Saving latest point...</p> : null}
         </div>
+        <div className="mt-4 grid grid-cols-[1fr_auto_auto] gap-2">
+          <select className="h-11 min-w-0 rounded-2xl border border-black/10 bg-black/[0.04] px-3 text-sm font-semibold outline-none" value={routeId} onChange={(event) => onRouteChange(event.target.value)}>
+            <option value="">No route selected</option>
+            {routes.map((item) => <option key={item.id} value={item.id}>{item.route_name}</option>)}
+          </select>
+          <Button variant="secondary" size="icon" onClick={onRefresh} aria-label="Refresh tracking">
+            <Crosshair className="size-4" />
+          </Button>
+          {directionsUrl ? (
+            <Button variant="secondary" size="icon" asChild>
+              <a href={directionsUrl} target="_blank" rel="noreferrer" aria-label="Open directions">
+                <ExternalLink className="size-4" />
+              </a>
+            </Button>
+          ) : null}
+        </div>
+        <div className="mt-3">
+          {tracking ? (
+            <Button className="w-full" variant="secondary" onClick={onStop}>
+              <Pause className="size-4" />
+              Stop tracking
+            </Button>
+          ) : (
+            <Button className="w-full" onClick={onStart}>
+              <LocateFixed className="size-4" />
+              Start tracking
+            </Button>
+          )}
+        </div>
+        {saving ? <p className="mt-3 text-xs font-semibold text-teal">Saving latest point...</p> : null}
+        {error ? <p className="mt-3 rounded-2xl border border-[var(--red-border)] bg-[var(--red-soft)] p-2 text-xs text-red">{error}</p> : null}
       </div>
     </div>
   );
+}
+
+function shortPlaceName(value: string) {
+  return value.split(",")[0]?.trim() || value;
+}
+
+function estimateSpeedLabel(mode?: string) {
+  if (mode === "Walking") return 5;
+  if (mode === "Bike") return 14;
+  if (mode === "Train") return 35;
+  if (mode === "Car") return 35;
+  if (mode === "Bus") return 24;
+  return 18;
 }
