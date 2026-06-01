@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CalendarCheck, Clock, Star } from "lucide-react";
+import { CalendarCheck, Clock, Star, Trash2 } from "lucide-react";
 import { RouteLogForm } from "@/components/commute/route-log-form";
 import { ResponsiveShell } from "@/components/layout/responsive-shell";
 import { DarkCard } from "@/components/ui-custom/dark-card";
@@ -18,6 +18,7 @@ export function RideLogsClient() {
   const [logs, setLogs] = useState<RouteLog[]>([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [deletingLogId, setDeletingLogId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function load() {
@@ -40,6 +41,25 @@ export function RideLogsClient() {
   useEffect(() => {
     load();
   }, []);
+
+  async function deleteLog(log: RouteLog) {
+    const routeName = log.ll_saved_routes?.route_name ?? "this ride log";
+    const confirmed = window.confirm(`Delete the ride log for ${routeName}?`);
+
+    if (!confirmed) return;
+
+    setDeletingLogId(log.id);
+    setError(null);
+
+    try {
+      await apiFetch<{ ok: boolean }>(`/api/logs?id=${encodeURIComponent(log.id)}`, { method: "DELETE" });
+      setLogs((items) => items.filter((item) => item.id !== log.id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to delete ride log");
+    } finally {
+      setDeletingLogId(null);
+    }
+  }
 
   const filteredLogs = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -74,7 +94,7 @@ export function RideLogsClient() {
           {loading ? <p className="p-5 text-sm text-white/45">Loading ride logs...</p> : null}
           {!loading && !filteredLogs.length ? <p className="p-5 text-sm text-white/45">No ride logs yet.</p> : null}
           {filteredLogs.map((log) => (
-            <div key={log.id} className="grid gap-3 px-5 py-4 text-sm md:grid-cols-[1fr_120px_120px_90px] md:items-center">
+            <div key={log.id} className="grid gap-3 px-5 py-4 text-sm md:grid-cols-[minmax(0,1fr)_120px_120px_90px_44px] md:items-center">
               <div>
                 <p className="font-semibold text-white">{log.ll_saved_routes?.route_name ?? "Saved route"}</p>
                 <p className="mt-1 text-white/38">{formatModes(log.preferred_modes ?? log.ll_saved_routes?.preferred_modes, log.ll_saved_routes?.preferred_mode)} · {log.notes || "No notes"}</p>
@@ -82,6 +102,16 @@ export function RideLogsClient() {
               <p className="font-semibold text-white/62">{new Date(log.travel_date).toLocaleDateString()}</p>
               <p className="font-semibold text-white/62">{log.actual_duration_minutes} min</p>
               <p className="font-semibold text-amber">{log.rating}/5</p>
+              <button
+                type="button"
+                className="flex size-10 items-center justify-center rounded-full border border-[var(--red-border)] bg-[var(--red-soft)] text-red transition hover:bg-[rgba(224,92,92,0.15)] disabled:pointer-events-none disabled:opacity-50"
+                onClick={() => deleteLog(log)}
+                disabled={deletingLogId === log.id}
+                aria-label={`Delete log for ${log.ll_saved_routes?.route_name ?? "saved route"}`}
+                title="Delete log"
+              >
+                <Trash2 className="size-4" />
+              </button>
             </div>
           ))}
         </div>

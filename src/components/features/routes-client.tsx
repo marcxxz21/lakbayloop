@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Clock, Filter, MapPin, X } from "lucide-react";
+import { Clock, Filter, MapPin, Trash2, X } from "lucide-react";
 import { AddRouteForm } from "@/components/commute/add-route-form";
 import { RouteCard } from "@/components/commute/route-card";
 import { RouteLogForm } from "@/components/commute/route-log-form";
@@ -31,6 +31,7 @@ export function RoutesPageClient() {
   const [routeFilter, setRouteFilter] = useState<RouteFilter>("All");
   const [filterOpen, setFilterOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [deletingRouteId, setDeletingRouteId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const visibleRoutes = routes.filter((route) => {
@@ -124,6 +125,8 @@ export function RoutesPageClient() {
               setMobileLogSignal((signal) => (signal ?? 0) + 1);
             }}
             onToggleFavorite={toggleFavorite}
+            onDelete={deleteRoute}
+            deleting={deletingRouteId === route.id}
           />
         ))}
         {!loading && !visibleRoutes.length ? <p className="rounded-2xl border border-white/[0.06] bg-white/[0.035] p-4 text-sm text-white/48">No routes match this filter.</p> : null}
@@ -170,8 +173,12 @@ export function RoutesPageClient() {
                 </div>
               </div>
             </div>
-            <div className="mt-5 grid grid-cols-2 gap-2">
+            <div className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-3">
               <Button variant="secondary" onClick={() => setMobileDetailsOpen(false)}>Close</Button>
+              <Button variant="danger" onClick={() => deleteRoute(selected)} disabled={deletingRouteId === selected.id}>
+                <Trash2 className="size-4" />
+                Delete
+              </Button>
               <Button onClick={() => {
                 setMobileDetailsOpen(false);
                 setMobileLogSignal((signal) => (signal ?? 0) + 1);
@@ -182,6 +189,28 @@ export function RoutesPageClient() {
       ) : null}
     </div>
   );
+
+  async function deleteRoute(route: SavedRoute) {
+    const confirmed = window.confirm(`Delete "${route.route_name}"? This also removes commute logs linked to this route.`);
+
+    if (!confirmed) return;
+
+    setDeletingRouteId(route.id);
+    setError(null);
+
+    try {
+      await apiFetch<{ ok: boolean }>(`/api/routes/${route.id}`, { method: "DELETE" });
+      const nextRoutes = routes.filter((item) => item.id !== route.id);
+      setRoutes(nextRoutes);
+      setSelected((current) => (current?.id === route.id ? (nextRoutes[0] ?? null) : current));
+      setMobileDetailsOpen(false);
+      setDesktopDetailsOpen(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to delete route");
+    } finally {
+      setDeletingRouteId(null);
+    }
+  }
 
   async function toggleFavorite(route: SavedRoute) {
     const nextFavorite = !route.is_favorite;
@@ -262,6 +291,8 @@ export function RoutesPageClient() {
                 setDesktopLogSignal((signal) => (signal ?? 0) + 1);
               }}
               onToggleFavorite={toggleFavorite}
+              onDelete={deleteRoute}
+              deleting={deletingRouteId === route.id}
             />
           ))}
           {!loading && !visibleRoutes.length ? <p className="rounded-2xl border border-white/[0.06] bg-white/[0.035] p-4 text-sm text-white/48">No routes match this filter.</p> : null}
@@ -296,8 +327,12 @@ export function RoutesPageClient() {
               <div className="flex justify-between gap-4 rounded-2xl bg-white/[0.035] p-3"><span>Preferred modes</span><b className="text-white">{formatModes(selected.preferred_modes, selected.preferred_mode)}</b></div>
               <div className="flex justify-between gap-4 rounded-2xl bg-white/[0.035] p-3"><span>Estimated</span><b className="text-white">{selected.estimated_minutes} min</b></div>
             </div>
-            <div className="mt-5">
+            <div className="mt-5 space-y-3">
               <RouteLogForm buttonLabel="Log this route" routes={routes} selectedRouteId={selected.id} />
+              <Button variant="danger" className="w-full" onClick={() => deleteRoute(selected)} disabled={deletingRouteId === selected.id}>
+                <Trash2 className="size-4" />
+                Delete route
+              </Button>
             </div>
           </>
         ) : <p className="text-sm text-white/45">Select or add a route to see details.</p>}
@@ -335,8 +370,12 @@ export function RoutesPageClient() {
                 <p className="mt-1 font-heading text-lg font-black text-white">{selected.estimated_minutes} min</p>
               </div>
             </div>
-            <div className="mt-5 grid grid-cols-2 gap-2">
+            <div className="mt-5 grid grid-cols-3 gap-2">
               <Button variant="secondary" onClick={() => setDesktopDetailsOpen(false)}>Close</Button>
+              <Button variant="danger" onClick={() => deleteRoute(selected)} disabled={deletingRouteId === selected.id}>
+                <Trash2 className="size-4" />
+                Delete
+              </Button>
               <Button onClick={() => {
                 setDesktopDetailsOpen(false);
                 setDesktopLogSignal((signal) => (signal ?? 0) + 1);

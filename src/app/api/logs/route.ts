@@ -61,3 +61,24 @@ export async function POST(request: Request) {
 
   return NextResponse.json({ log: data }, { status: 201 });
 }
+
+export async function DELETE(request: Request) {
+  const sessionId = await getRequestSessionId(request);
+  const supabase = getSupabaseDataClient(sessionId);
+  const id = new URL(request.url).searchParams.get("id");
+
+  if (!id) {
+    return NextResponse.json({ error: "Log id is required" }, { status: 400 });
+  }
+
+  const { error, count } = await supabase
+    .from("ll_route_logs")
+    .delete({ count: "exact" })
+    .eq("session_id", sessionId)
+    .eq("id", id);
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (count === 0) return NextResponse.json({ error: "Log not found" }, { status: 404 });
+
+  return NextResponse.json({ ok: true });
+}

@@ -63,13 +63,14 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   const sessionId = await getRequestSessionId(request);
   const supabase = getSupabaseDataClient(sessionId);
 
-  const { error } = await supabase
+  const { error, count } = await supabase
     .from("ll_saved_routes")
-    .delete()
+    .delete({ count: "exact" })
     .eq("session_id", sessionId)
     .eq("id", id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (count === 0) return NextResponse.json({ error: "Route not found" }, { status: 404 });
 
   return NextResponse.json({ ok: true });
 }
