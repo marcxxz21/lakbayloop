@@ -12,6 +12,14 @@ export function getLocalAccountSessionId(email: string) {
 }
 
 const accountEmailsKey = "lakbayloop_account_emails";
+const browserSessionKey = "lakbayloop_session_id";
+
+function createGuestSessionId() {
+  const id = typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  return `guest:${id}`;
+}
 
 export function getRememberedAccountEmails() {
   if (typeof window === "undefined") return [];
@@ -35,21 +43,22 @@ export function rememberAccountEmail(email: string) {
 export function getBrowserSessionId() {
   if (typeof window === "undefined") return demoSessionId;
 
-  const existing = window.localStorage.getItem("lakbayloop_session_id");
-  if (existing) return existing;
+  const existing = window.localStorage.getItem(browserSessionKey);
+  if (existing && existing !== demoSessionId) return existing;
 
-  window.localStorage.setItem("lakbayloop_session_id", demoSessionId);
-  return demoSessionId;
+  const sessionId = createGuestSessionId();
+  window.localStorage.setItem(browserSessionKey, sessionId);
+  return sessionId;
 }
 
 export function setBrowserSessionId(sessionId: string) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem("lakbayloop_session_id", sessionId);
+  window.localStorage.setItem(browserSessionKey, sessionId);
 }
 
 export function clearBrowserSessionId() {
   if (typeof window === "undefined") return;
-  window.localStorage.removeItem("lakbayloop_session_id");
+  window.localStorage.removeItem(browserSessionKey);
 }
 
 export async function getRequestSessionId(request: Request) {

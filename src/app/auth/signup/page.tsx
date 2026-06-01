@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ArrowLeft, MapPinned } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { AppLogoMark } from "@/components/brand/app-logo-mark";
 import { SignupFormClient } from "@/components/features/auth-form-client";
 import { appName, tagline } from "@/lib/constants";
 
@@ -13,9 +14,7 @@ export default function SignupPage() {
             Back
           </Link>
           <div className="mt-10 flex items-center gap-3">
-            <span className="flex size-11 items-center justify-center rounded-[16px] bg-blue">
-              <MapPinned className="size-5" />
-            </span>
+            <AppLogoMark className="size-11 rounded-[16px]" />
             <span className="font-heading text-2xl font-black">{appName}</span>
           </div>
           <h1 className="mt-8 max-w-lg font-heading text-4xl font-black leading-tight lg:text-5xl lg:leading-none">Set up your commute profile.</h1>

@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { BarChart3, Database, Home, MapPinned, Navigation, PlusCircle, Route, Settings } from "lucide-react";
+import { BarChart3, Database, Home, Navigation, PlusCircle, Route, Settings } from "lucide-react";
+import { AppLogoMark } from "@/components/brand/app-logo-mark";
 import { Avatar } from "@/components/ui/avatar";
 import { apiFetch } from "@/lib/api-client";
 import { appName, tagline } from "@/lib/constants";
@@ -45,9 +46,7 @@ export function DesktopSidebar() {
     <aside className="hidden h-screen w-[272px] shrink-0 flex-col border-r border-white/[0.06] bg-[#0B0E14]/92 backdrop-blur-2xl lg:flex">
       <div className="border-b border-white/[0.05] p-5">
         <Link href="/dashboard" className="flex items-center gap-3">
-          <span className="flex size-9 items-center justify-center rounded-[13px] bg-blue">
-            <MapPinned className="size-5 text-white" />
-          </span>
+          <AppLogoMark className="size-9 rounded-[13px]" />
           <span>
             <span className="block font-heading text-lg font-black text-white">{appName}</span>
             <span className="block text-xs text-white/35">{tagline}</span>

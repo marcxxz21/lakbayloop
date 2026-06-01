@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ArrowLeft, MapPinned } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { AppLogoMark } from "@/components/brand/app-logo-mark";
 import { Button } from "@/components/ui/button";
 import { appName } from "@/lib/constants";
 
@@ -12,9 +13,7 @@ export default function ResetPasswordPage() {
           Back to login
         </Link>
         <div className="flex items-center gap-3">
-          <span className="flex size-10 items-center justify-center rounded-[14px] bg-blue">
-            <MapPinned className="size-5" />
-          </span>
+          <AppLogoMark />
           <span className="font-heading text-xl font-black">{appName}</span>
         </div>
         <h1 className="mt-8 font-heading text-3xl font-black">No password needed</h1>

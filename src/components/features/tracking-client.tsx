@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { PointerEvent, ReactNode } from "react";
+import type { PointerEvent, ReactNode, WheelEvent } from "react";
 import {
   AlertTriangle,
   ChevronLeft,
@@ -10,9 +10,11 @@ import {
   Layers,
   LocateFixed,
   MapPin,
+  Minus,
   Navigation,
   Pause,
   Play,
+  Plus,
   Radio,
   Save,
   Volume2,
@@ -62,6 +64,8 @@ const geoOptions: PositionOptions = {
 
 const defaultCenter = { latitude: 14.5995, longitude: 120.9842 };
 const tileSize = 256;
+const minMapZoom = 10;
+const maxMapZoom = 18;
 
 export function TrackingClient() {
   const [routes, setRoutes] = useState<SavedRoute[]>([]);
@@ -719,7 +723,9 @@ function LiveTileMap({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const dragRef = useRef<{ x: number; y: number; center: MapPoint } | null>(null);
   const [size, setSize] = useState({ width: 390, height: 720 });
-  const zoom = currentPosition ? 15 : origin && destination ? 12 : 11;
+  const defaultZoom = currentPosition ? 15 : origin && destination ? 12 : 11;
+  const routeKey = `${origin?.latitude ?? "none"},${origin?.longitude ?? "none"}:${destination?.latitude ?? "none"},${destination?.longitude ?? "none"}`;
+  const [zoom, setZoom] = useState(defaultZoom);
   const anchorY = follow ? size.height * 0.58 : size.height / 2;
   const centerPixel = projectPoint(center, zoom);
   const tiles = useMemo(() => getTiles(centerPixel, size, zoom, anchorY), [centerPixel.x, centerPixel.y, size, zoom, anchorY]);
@@ -736,6 +742,10 @@ function LiveTileMap({
     resizeObserver.observe(containerRef.current);
     return () => resizeObserver.disconnect();
   }, []);
+
+  useEffect(() => {
+    setZoom(defaultZoom);
+  }, [defaultZoom, routeKey]);
 
   const toScreen = useCallback((point: MapPoint) => {
     const pixel = projectPoint(point, zoom);
@@ -760,9 +770,10 @@ function LiveTileMap({
 
   function onPointerMove(event: PointerEvent<HTMLDivElement>) {
     if (!dragRef.current) return;
+    event.preventDefault();
     const deltaX = event.clientX - dragRef.current.x;
     const deltaY = event.clientY - dragRef.current.y;
-    if (Math.abs(deltaX) + Math.abs(deltaY) < 4) return;
+    if (Math.abs(deltaX) + Math.abs(deltaY) < 2) return;
     const startPixel = projectPoint(dragRef.current.center, zoom);
     onPanAway(unprojectPoint({ x: startPixel.x - deltaX, y: startPixel.y - deltaY }, zoom));
   }
@@ -772,14 +783,28 @@ function LiveTileMap({
     dragRef.current = null;
   }
 
+  function adjustZoom(delta: number) {
+    setZoom((value) => Math.min(maxMapZoom, Math.max(minMapZoom, value + delta)));
+  }
+
+  function onWheel(event: WheelEvent<HTMLDivElement>) {
+    event.preventDefault();
+    adjustZoom(event.deltaY < 0 ? 1 : -1);
+  }
+
+  function stopMapDrag(event: PointerEvent<HTMLButtonElement>) {
+    event.stopPropagation();
+  }
+
   return (
     <div
       ref={containerRef}
-      className="absolute inset-0 cursor-grab overflow-hidden bg-[#17212b] active:cursor-grabbing"
+      className="absolute inset-0 touch-none cursor-grab select-none overflow-hidden bg-[#17212b] active:cursor-grabbing"
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
+      onWheel={onWheel}
     >
       {tiles.map((tile) => (
         <img
@@ -806,6 +831,27 @@ function LiveTileMap({
       {originPoint ? <MapLabel point={originPoint} label="Start" tone="blue" /> : null}
       {destinationPoint ? <MapLabel point={destinationPoint} label="End" tone="amber" /> : null}
       {userPoint ? <LiveUserMarker point={userPoint} heading={currentPosition?.heading ?? null} active={active} /> : null}
+      <div className="absolute right-3 top-[calc(env(safe-area-inset-top)+318px)] z-20 grid overflow-hidden rounded-2xl border border-black/10 bg-white shadow-panel lg:right-5">
+        <button
+          type="button"
+          className="flex size-11 items-center justify-center text-[#20242a] transition hover:bg-black/[0.05] active:bg-black/[0.08]"
+          onClick={() => adjustZoom(1)}
+          onPointerDown={stopMapDrag}
+          aria-label="Zoom in"
+        >
+          <Plus className="size-5" />
+        </button>
+        <span className="h-px bg-black/10" />
+        <button
+          type="button"
+          className="flex size-11 items-center justify-center text-[#20242a] transition hover:bg-black/[0.05] active:bg-black/[0.08]"
+          onClick={() => adjustZoom(-1)}
+          onPointerDown={stopMapDrag}
+          aria-label="Zoom out"
+        >
+          <Minus className="size-5" />
+        </button>
+      </div>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, BarChart3, MapPinned, Route } from "lucide-react";
+import { AppLogoMark } from "@/components/brand/app-logo-mark";
 import { Button } from "@/components/ui/button";
 import { GlassCard } from "@/components/ui-custom/glass-card";
 import { DarkCard } from "@/components/ui-custom/dark-card";
@@ -26,9 +27,7 @@ export default async function LandingPage({
       <div className="relative mx-auto flex min-h-screen max-w-7xl flex-col px-5 py-6 lg:px-8">
         <nav className="flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
-            <span className="flex size-10 items-center justify-center rounded-[14px] bg-blue">
-              <MapPinned className="size-5 text-white" />
-            </span>
+            <AppLogoMark />
             <span>
               <span className="block font-heading text-lg font-black">{appName}</span>
               <span className="block text-xs text-white/38">{tagline}</span>

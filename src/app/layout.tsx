@@ -3,7 +3,12 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Kalakbay",
-  description: "Your daily commute companion."
+  description: "Your daily commute companion.",
+  icons: {
+    icon: "/kalakbay_logo.png",
+    shortcut: "/kalakbay_logo.png",
+    apple: "/kalakbay_logo.png"
+  }
 };
 
 export default function RootLayout({

@@ -13,8 +13,8 @@ import {
 } from "lucide-react";
 
 export const mockUser = {
-  name: "Josie",
-  initials: "JD",
+  name: "Kalakbay rider",
+  initials: "KR",
   schoolOrWorkplace: "Daily commute"
 };
 

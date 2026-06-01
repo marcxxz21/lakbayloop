@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ArrowLeft, MapPinned } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { AppLogoMark } from "@/components/brand/app-logo-mark";
 import { GlassCard } from "@/components/ui-custom/glass-card";
 import { RouteArt } from "@/components/commute/route-art";
 import { LoginFormClient } from "@/components/features/auth-form-client";
@@ -24,9 +25,7 @@ export default function LoginPage() {
       <section className="flex items-center justify-center px-5 py-10">
         <div className="w-full max-w-md">
           <Link href="/" className="mb-10 flex items-center gap-3">
-            <span className="flex size-10 items-center justify-center rounded-[14px] bg-blue">
-              <MapPinned className="size-5" />
-            </span>
+            <AppLogoMark />
             <span className="font-heading text-xl font-black">{appName}</span>
           </Link>
           <h2 className="font-heading text-3xl font-black">Open profile</h2>

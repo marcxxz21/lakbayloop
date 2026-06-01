@@ -33,7 +33,7 @@ export async function GET(request: Request) {
     user: userResult.data ?? {
       id: "demo",
       session_id: sessionId,
-      full_name: "Josie Dela Cruz",
+      full_name: "Kalakbay rider",
       email: null,
       school_or_workplace: "Daily commute",
       preferred_mode: "Mixed",
