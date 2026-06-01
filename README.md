@@ -2,99 +2,133 @@
 
 Your daily commute companion.
 
-Kalakbay is a responsive daily commute companion for riders of all ages. It uses a premium dark mobile-first interface and a desktop dashboard to help users save routes, log rides, monitor commute conditions, and understand mobility patterns. The project is designed as an end-to-end data engineering app using Next.js, Supabase, free public APIs, and Vercel Cron Jobs.
+Kalakbay is a responsive commute-tracking and route-logging app for everyday riders. It helps users save regular trips, search real addresses, estimate routes, log ride experiences, track live movement, and understand commute patterns through a Supabase-backed dashboard.
+
+The app is built as a polished data engineering project: public mobility/weather APIs feed route context, Supabase stores user-scoped data, and Next.js API routes transform that data into dashboard metrics, insights, maps, and logs.
+
+## Current Status
+
+- Rebranded from LakbayLoop to Kalakbay.
+- GitHub repository renamed to `marcxxz21/kalakbay`.
+- Local project folder renamed to `kalakbay`.
+- Vercel production deployments are working from Git pushes, but the Vercel project/domain still need to be renamed in the Vercel dashboard because the connector does not expose a project-rename action.
+- The app uses local email-based profiles instead of Supabase Auth email confirmation, avoiding email rate-limit issues while still storing data in Supabase by browser profile/session.
 
 ## Target Users
 
-- Anyone with regular daily routes, errands, appointments, work, school, or caregiving trips.
+- Commuters of all ages with recurring routes, errands, appointments, work, school, or caregiving trips.
 - Riders who combine walking, jeepney, bus, train, bike, car, and mixed commutes.
-- Builders who want a compact data engineering project with a polished product surface.
+- People who want a quick way to compare estimated travel time with actual commute experience.
+- Builders reviewing a compact full-stack data engineering app with a product-quality interface.
 
 ## Features
 
-- Responsive landing, login, signup, dashboard, routes, insights, and pipeline logs pages.
-- Mobile app shell with floating bottom navigation.
-- Desktop dashboard shell with fixed sidebar, topbar, KPI grid, route panels, charts, and pipeline table.
-- Supabase-backed profile, saved routes, route logs, insights, and pipeline freshness data.
-- Working add route, search routes, favorite route, log ride, and API refresh flows.
-- API routes for `/api/profile`, `/api/routes`, `/api/logs`, `/api/dashboard`, `/api/insights`, and `/api/pipeline`.
-- Pipeline refresh calls Open-Meteo Weather, Open-Meteo Air Quality, and OSRM, stores raw responses, transforms clean rows, and logs observability records.
+- Local profile creation and login by email, backed by Supabase tables.
+- Dashboard with saved route count, monthly logs, average commute time, pipeline status, daily commute context, weather/air-quality chart, favorite routes, and recent logs.
+- Time-aware personalized greetings such as Good morning, Good afternoon, and Good night.
+- Route library with search, filtering, favorites, route details modal, and log-ride shortcuts.
+- Add route flow with searchable start and end addresses through OpenStreetMap Nominatim.
+- Multi-mode commute support, including combinations such as Jeepney + Bus + Walking.
+- Route logging from either a saved route or a newly created route.
+- Log form captures travel date, actual minutes, crowd level, experience rating, notes, and modes used.
+- Insights page with average commute duration, most-used route, average rating, common crowd level, route usage, crowd distribution, and recent trends.
+- Tracking page with a map-first interface, draggable/zoomable OpenStreetMap tiles, route geometry, real-time location samples, ETA, arrival estimate, remaining distance, elapsed time, speed, and street-by-street directions from OSRM.
+- Pipeline page for manual refreshes and observability around weather, air quality, and routing data pulls.
+- Settings/profile page for updating name, email context, workplace or regular destination, and preferred commute modes.
+- Mobile app shell with bottom navigation and desktop shell with fixed sidebar/topbar.
+- Kalakbay logo and browser tab icon wired into the app.
+
+## Pages
+
+- `/` - Landing page
+- `/auth/signup` - Create local Kalakbay profile
+- `/auth/login` - Open existing local profile by email
+- `/auth/reset` - No-password/reset explanation
+- `/dashboard` - Main commute dashboard
+- `/routes` - Saved route library, filters, favorites, details, and add route
+- `/logs` - Commute logging flow
+- `/tracking` - Live route tracking map
+- `/insights` - Commute analytics and patterns
+- `/pipeline` - Data refresh and pipeline status
+- `/settings` - Profile/settings tab
+
+## API Routes
+
+- `/api/local-auth` - Local profile lookup and creation
+- `/api/profile` - Profile read/update
+- `/api/routes` - Saved route list/create/update support
+- `/api/routes/[id]` - Route-specific updates
+- `/api/logs` - Route log list/create
+- `/api/dashboard` - Dashboard metrics and commute context
+- `/api/insights` - Aggregated commute insights
+- `/api/tracking` - Tracking point storage and retrieval
+- `/api/geocode` - Address search through Nominatim
+- `/api/directions` - OSRM route geometry and street directions
+- `/api/pipeline` - Manual refresh of weather, air quality, route snapshots, and pipeline logs
 
 ## Tech Stack
 
 - Next.js App Router
+- React
 - TypeScript
 - Tailwind CSS
-- shadcn-style local UI primitives
-- Lucide React
+- Local shadcn-style UI primitives
+- Lucide React icons
 - Recharts
-- Supabase Auth and PostgreSQL later
-- Vercel deployment later
+- Supabase JavaScript client
+- Supabase Postgres
+- Next.js API routes
+- Vercel deployment
 
-## UI Mockup Source
+## External APIs
 
-This implementation is converted from the existing project mockups:
+- OpenStreetMap Nominatim for address and landmark search.
+- OSRM for route geometry, estimated duration, route distance, and street-by-street directions.
+- Open-Meteo Forecast API for weather and rain probability.
+- Open-Meteo Air Quality API for AQI context.
+- OpenStreetMap tile server for map tiles.
 
-- `kalakbay-web.html` for the desktop dashboard shell, sidebar, auth overlay direction, KPI cards, dashboard styling, routes, insights, tables, and modals.
-- `kalakbay.html` for the mobile app flow, bottom navigation, route cards, metric cards, badges, route logging, and mobile interaction style.
+## Database
 
-## Responsive Design
-
-The app intentionally uses two layout systems that share tokens and components:
-
-- `MobileAppShell` below large desktop widths.
-- `DesktopDashboardShell` for desktop dashboard workflows.
-
-Mobile is stacked, touch-friendly, and app-like. Desktop is denser, scannable, and dashboard-oriented.
-
-## Color System
-
-The UI uses the improved dark token system from the brief:
-
-- Blue: primary actions, selected states, route intelligence, active navigation.
-- Teal: successful pipeline runs, good conditions, completed logs.
-- Amber: caution, partial pipeline runs, rain warnings, moderate crowding.
-- Red: failed pipeline runs, errors, poor conditions.
-- White and muted white: primary and secondary text hierarchy.
-
-## Data Engineering Architecture
-
-```text
-Free APIs
-↓
-Vercel Cron Job
-↓
-Next.js API Route
-↓
-Raw API Response Storage
-↓
-Transform Layer
-↓
-Clean Supabase Tables
-↓
-Dashboard Analytics
-```
-
-## Planned Database Schema
+Kalakbay uses Supabase Postgres with `ll_`-prefixed tables:
 
 - `ll_app_users`
 - `ll_saved_routes`
 - `ll_route_logs`
+- `ll_tracking_points`
 - `ll_weather_daily`
 - `ll_air_quality_daily`
 - `ll_route_snapshots`
 - `ll_raw_api_responses`
 - `ll_pipeline_logs`
 
-The `ll_` prefix keeps Kalakbay isolated from other tables in the shared Supabase project. RLS is enabled and scoped by the `x-lakbayloop-session` request header for the current browser profile session. Production auth can replace this with `auth.uid()` ownership policies later.
+Data is scoped by the current browser profile/session using the `x-lakbayloop-session` request header. This keeps multiple local profiles separated without requiring Supabase email confirmation.
 
-## Planned APIs
+## Data Flow
 
-- Open-Meteo weather
-- Open-Meteo air quality
-- OSRM route estimates
-- Manual refresh endpoint for development
-- Vercel Cron route for scheduled refreshes
+```text
+User actions
+↓
+Next.js pages and forms
+↓
+Next.js API routes
+↓
+Supabase Postgres
+↓
+Dashboard, insights, logs, and tracking UI
+```
+
+```text
+Nominatim / OSRM / Open-Meteo
+↓
+Next.js API transformation layer
+↓
+Raw API response storage
+↓
+Clean commute context tables
+↓
+Dashboard and pipeline analytics
+```
 
 ## Local Setup
 
@@ -105,6 +139,23 @@ npm run dev
 
 Open `http://localhost:3000`.
 
+## Environment Variables
+
+Create `.env.local`:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+OPEN_METEO_FORECAST_URL=
+OPEN_METEO_AIR_QUALITY_URL=
+OSRM_ROUTE_URL=
+NOMINATIM_SEARCH_URL=
+NOMINATIM_COUNTRYCODES=ph
+```
+
+Only the Supabase URL and publishable key are required for normal app usage. The API URL variables are optional overrides because the app has defaults for the public providers.
+
 ## Build Checks
 
 ```bash
@@ -112,43 +163,21 @@ npm run lint
 npm run build
 ```
 
-## Environment Variables
-
-Add these locally in `.env.local`:
-
-```bash
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
-```
-
-The current app only requires `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Use `SUPABASE_SERVICE_ROLE_KEY` only on the server if admin-only jobs are added later.
-
 ## Deployment
 
-Deploy to Vercel after the project builds:
+The app is deployed through Vercel from the GitHub repository. Pushing to `main` triggers the connected Vercel production deployment.
 
-```bash
-npm run build
-```
+Current follow-up for deployment branding:
 
-Then connect the repository in Vercel or push to the configured GitHub remote.
+- Rename the Vercel project from `lakbayloop` to `kalakbay`.
+- Move the production domain from `lakbayloop.vercel.app` to a Kalakbay-branded Vercel domain or custom domain.
 
 ## Future Improvements
 
-- Replace demo profile login with full Supabase Auth.
-- Generate TypeScript database types from Supabase.
-- Add Vercel Cron for scheduled weather, air quality, and OSRM refreshes.
-- Tighten RLS from session-header demo scoping to authenticated user ownership.
-- Add edit route and delete log UI controls.
-
-## Screenshots
-
-Add screenshots after the first browser QA pass:
-
-- Mobile landing
-- Mobile dashboard
-- Desktop dashboard
-- Routes
-- Insights
-- Pipeline logs
+- Rename the Vercel project/domain to match Kalakbay.
+- Add route editing and route deletion controls.
+- Add log editing/deletion.
+- Add richer notification functionality instead of static notification UI.
+- Add optional full Supabase Auth if production account security becomes a priority.
+- Add scheduled Vercel Cron refreshes for weather, air quality, and route snapshots.
+- Generate typed Supabase database definitions for stricter end-to-end typing.
