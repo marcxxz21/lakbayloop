@@ -8,6 +8,7 @@ import { DarkCard } from "@/components/ui-custom/dark-card";
 import { MetricCard } from "@/components/ui-custom/metric-card";
 import { SearchInput } from "@/components/ui-custom/search-input";
 import { apiFetch } from "@/lib/api-client";
+import { formatModes } from "@/lib/commute-calculations";
 import type { RouteLog, SavedRoute } from "@/lib/types";
 
 type LogsResponse = { logs: RouteLog[] };
@@ -45,7 +46,8 @@ export function RideLogsClient() {
     if (!needle) return logs;
     return logs.filter((log) => {
       const routeName = log.ll_saved_routes?.route_name ?? "";
-      return [routeName, log.travel_date, log.crowd_level, log.notes ?? ""].some((value) => value.toLowerCase().includes(needle));
+      const modes = formatModes(log.preferred_modes ?? log.ll_saved_routes?.preferred_modes, log.ll_saved_routes?.preferred_mode);
+      return [routeName, modes, log.travel_date, log.crowd_level, log.notes ?? ""].some((value) => value.toLowerCase().includes(needle));
     });
   }, [logs, query]);
 
@@ -75,7 +77,7 @@ export function RideLogsClient() {
             <div key={log.id} className="grid gap-3 px-5 py-4 text-sm md:grid-cols-[1fr_120px_120px_90px] md:items-center">
               <div>
                 <p className="font-semibold text-white">{log.ll_saved_routes?.route_name ?? "Saved route"}</p>
-                <p className="mt-1 text-white/38">{log.notes || "No notes"}</p>
+                <p className="mt-1 text-white/38">{formatModes(log.preferred_modes ?? log.ll_saved_routes?.preferred_modes, log.ll_saved_routes?.preferred_mode)} · {log.notes || "No notes"}</p>
               </div>
               <p className="font-semibold text-white/62">{new Date(log.travel_date).toLocaleDateString()}</p>
               <p className="font-semibold text-white/62">{log.actual_duration_minutes} min</p>

@@ -10,7 +10,7 @@ export async function GET(request: Request) {
   const [userResult, routesResult, logsResult, pipelineResult, weatherResult, airResult] = await Promise.all([
     supabase.from("ll_app_users").select("*").eq("session_id", sessionId).maybeSingle(),
     supabase.from("ll_saved_routes").select("*").eq("session_id", sessionId).order("is_favorite", { ascending: false }).order("created_at", { ascending: false }),
-    supabase.from("ll_route_logs").select("*, ll_saved_routes(route_name, preferred_mode)").eq("session_id", sessionId).order("travel_date", { ascending: false }).limit(8),
+    supabase.from("ll_route_logs").select("*, ll_saved_routes(route_name, preferred_mode, preferred_modes)").eq("session_id", sessionId).order("travel_date", { ascending: false }).limit(8),
     supabase.from("ll_pipeline_logs").select("*").eq("session_id", sessionId).order("executed_at", { ascending: false }).limit(1),
     supabase.from("ll_weather_daily").select("*").eq("session_id", sessionId).order("observed_at", { ascending: false }).limit(1),
     supabase.from("ll_air_quality_daily").select("*").eq("session_id", sessionId).order("observed_at", { ascending: false }).limit(1)
@@ -35,8 +35,9 @@ export async function GET(request: Request) {
       session_id: sessionId,
       full_name: "Josie Dela Cruz",
       email: null,
-      school_or_workplace: "UP Manila",
+      school_or_workplace: "Daily commute",
       preferred_mode: "Mixed",
+      preferred_modes: ["Mixed"],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     },

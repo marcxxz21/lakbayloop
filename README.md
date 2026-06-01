@@ -1,13 +1,13 @@
-# LakbayLoop
+# Kalakbay
 
-Plan. Log. Learn your commute.
+Your daily commute companion.
 
-LakbayLoop is a responsive daily commute intelligence app for students and young adults. It uses a premium dark mobile-first interface and a desktop SaaS-style dashboard to help users save routes, log rides, monitor commute conditions, and understand mobility patterns. The project is designed as an end-to-end data engineering app using Next.js, Supabase, free public APIs, and Vercel Cron Jobs.
+Kalakbay is a responsive daily commute companion for riders of all ages. It uses a premium dark mobile-first interface and a desktop dashboard to help users save routes, log rides, monitor commute conditions, and understand mobility patterns. The project is designed as an end-to-end data engineering app using Next.js, Supabase, free public APIs, and Vercel Cron Jobs.
 
 ## Target Users
 
-- Students who commute to campus.
-- Interns and young professionals balancing school, work, and transit.
+- Anyone with regular daily routes, errands, appointments, work, school, or caregiving trips.
+- Riders who combine walking, jeepney, bus, train, bike, car, and mixed commutes.
 - Builders who want a compact data engineering project with a polished product surface.
 
 ## Features
@@ -86,7 +86,7 @@ Dashboard Analytics
 - `ll_raw_api_responses`
 - `ll_pipeline_logs`
 
-The `ll_` prefix keeps LakbayLoop isolated from other tables in the shared Supabase project. RLS is enabled and scoped by the `x-lakbayloop-session` request header for the current demo session. Production auth should replace this with `auth.uid()` ownership policies.
+The `ll_` prefix keeps Kalakbay isolated from other tables in the shared Supabase project. RLS is enabled and scoped by the `x-lakbayloop-session` request header for the current demo session. Production auth should replace this with `auth.uid()` ownership policies.
 
 ## Planned APIs
 

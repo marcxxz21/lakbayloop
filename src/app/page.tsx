@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { GlassCard } from "@/components/ui-custom/glass-card";
 import { DarkCard } from "@/components/ui-custom/dark-card";
 import { RouteArt } from "@/components/commute/route-art";
+import { appName, tagline } from "@/lib/constants";
 
 const features = [
-  { title: "Save daily routes", body: "Keep school, internship, and work commutes in one clean route library.", icon: Route },
+  { title: "Save daily routes", body: "Keep errands, appointments, work, school, and regular trips in one clean route library.", icon: Route },
   { title: "Log each ride", body: "Capture actual duration, crowd level, rating, and notes from the trip.", icon: MapPinned },
   { title: "Understand patterns", body: "Turn commute history into simple trends for better timing decisions.", icon: BarChart3 }
 ];
@@ -29,8 +30,8 @@ export default async function LandingPage({
               <MapPinned className="size-5 text-white" />
             </span>
             <span>
-              <span className="block font-heading text-lg font-black">LakbayLoop</span>
-              <span className="block text-xs text-white/38">Plan. Log. Learn your commute.</span>
+              <span className="block font-heading text-lg font-black">{appName}</span>
+              <span className="block text-xs text-white/38">{tagline}</span>
             </span>
           </Link>
           <div className="hidden items-center gap-2 sm:flex">
@@ -60,13 +61,13 @@ export default async function LandingPage({
         <section className="grid flex-1 items-center gap-10 py-12 lg:grid-cols-[1fr_0.95fr] lg:py-16">
           <div className="max-w-2xl">
             <p className="mb-5 inline-flex rounded-full border border-[var(--blue-border)] bg-[var(--blue-soft)] px-4 py-2 text-sm font-semibold text-blue">
-              Premium commute intelligence for students and young professionals
+              Daily commute support for every rider
             </p>
             <h1 className="font-heading text-4xl font-black leading-tight tracking-normal text-white sm:text-5xl lg:text-7xl lg:leading-[0.95]">
-              Your commute, ready before you leave.
+              {appName}
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-8 text-white/65">
-              Save routes, check conditions, log your ride, and understand your patterns over time.
+              {tagline} Save routes, check conditions, log your ride, and understand your patterns over time.
             </p>
             <div className="mt-8 grid gap-3 sm:flex">
               <Button size="lg" className="w-full sm:w-auto" asChild>

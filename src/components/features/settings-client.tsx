@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DarkCard } from "@/components/ui-custom/dark-card";
 import { apiFetch } from "@/lib/api-client";
-import { preferredModes } from "@/lib/constants";
+import { appName, preferredModes } from "@/lib/constants";
 import { clearBrowserSessionId } from "@/lib/session";
 import type { AppUser, PreferredMode } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -86,7 +86,7 @@ export function SettingsClient() {
               <Input className="mt-2" type="email" value={email} onChange={(event) => setEmail(event.target.value)} />
             </div>
             <div className="md:col-span-2">
-              <Label>School or workplace</Label>
+              <Label>Common destination or area</Label>
               <Input className="mt-2" value={school} onChange={(event) => setSchool(event.target.value)} required />
             </div>
           </div>
@@ -116,7 +116,7 @@ export function SettingsClient() {
       <DarkCard className="h-fit p-5">
         <p className="text-xs font-bold uppercase tracking-[0.08em] text-white/35">Account</p>
         <h2 className="mt-2 font-heading text-2xl font-black">Session controls</h2>
-        <p className="mt-3 text-sm leading-6 text-white/50">Sign out clears the local LakbayLoop profile session in this browser.</p>
+        <p className="mt-3 text-sm leading-6 text-white/50">Sign out clears the local {appName} profile session in this browser.</p>
         <Button variant="secondary" className="mt-5 w-full" onClick={signOut}>
           <LogOut className="size-4" />
           Sign out

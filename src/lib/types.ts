@@ -25,6 +25,7 @@ export type SavedRoute = {
   destination_lat: number | null;
   destination_lng: number | null;
   preferred_mode: PreferredMode;
+  preferred_modes?: PreferredMode[] | null;
   is_favorite: boolean;
   distance_km: number;
   estimated_minutes: number;
@@ -44,7 +45,8 @@ export type RouteLog = {
   rating: number;
   notes: string | null;
   created_at: string;
-  ll_saved_routes?: Pick<SavedRoute, "route_name" | "preferred_mode"> | null;
+  preferred_modes?: PreferredMode[] | null;
+  ll_saved_routes?: Pick<SavedRoute, "route_name" | "preferred_mode" | "preferred_modes"> | null;
 };
 
 export type PipelineLog = {

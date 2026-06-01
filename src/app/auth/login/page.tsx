@@ -3,6 +3,7 @@ import { ArrowLeft, MapPinned } from "lucide-react";
 import { GlassCard } from "@/components/ui-custom/glass-card";
 import { RouteArt } from "@/components/commute/route-art";
 import { LoginFormClient } from "@/components/features/auth-form-client";
+import { appName } from "@/lib/constants";
 
 export default function LoginPage() {
   return (
@@ -26,7 +27,7 @@ export default function LoginPage() {
             <span className="flex size-10 items-center justify-center rounded-[14px] bg-blue">
               <MapPinned className="size-5" />
             </span>
-            <span className="font-heading text-xl font-black">LakbayLoop</span>
+            <span className="font-heading text-xl font-black">{appName}</span>
           </Link>
           <h2 className="font-heading text-3xl font-black">Open profile</h2>
           <p className="mt-3 text-white/55">Use your saved email to open routes, ride logs, and mobility insights. No email confirmation needed.</p>

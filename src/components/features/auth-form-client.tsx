@@ -126,8 +126,8 @@ export function SignupFormClient() {
         <Input className="mt-2" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="Email" required />
       </div>
       <div>
-        <Label>School or workplace</Label>
-        <Input className="mt-2" value={school} onChange={(event) => setSchool(event.target.value)} placeholder="School or workplace" required />
+        <Label>Common destination or area</Label>
+        <Input className="mt-2" value={school} onChange={(event) => setSchool(event.target.value)} placeholder="Workplace, school, market, clinic, or area" required />
       </div>
       <div className="md:col-span-2">
         <Label>Preferred commute modes</Label>

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { calculateDistanceKm, estimateMinutes } from "@/lib/commute-calculations";
+import { calculateDistanceKm, estimateMinutesForModes, primaryMode } from "@/lib/commute-calculations";
 import { getRequestSessionId } from "@/lib/session";
 import { getSupabaseDataClient } from "@/lib/supabase/data";
 import type { PreferredMode } from "@/lib/types";
@@ -14,6 +14,7 @@ const patchSchema = z.object({
   destination_lat: z.coerce.number().optional().nullable(),
   destination_lng: z.coerce.number().optional().nullable(),
   preferred_mode: z.enum(["Walking", "Jeepney", "Bus", "Train", "Bike", "Car", "Mixed"]).optional(),
+  preferred_modes: z.array(z.enum(["Walking", "Jeepney", "Bus", "Train", "Bike", "Car", "Mixed"])).min(1).optional(),
   is_favorite: z.boolean().optional()
 });
 
@@ -34,12 +35,15 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   const merged = { ...current, ...body };
   const distanceKm = calculateDistanceKm(merged.origin_lat, merged.origin_lng, merged.destination_lat, merged.destination_lng);
-  const estimated = estimateMinutes(distanceKm, merged.preferred_mode as PreferredMode);
+  const modes = (merged.preferred_modes?.length ? merged.preferred_modes : [merged.preferred_mode ?? "Mixed"]) as PreferredMode[];
+  const estimated = estimateMinutesForModes(distanceKm, modes);
 
   const { data, error } = await supabase
     .from("ll_saved_routes")
     .update({
       ...body,
+      preferred_mode: body.preferred_modes ? primaryMode(modes) : body.preferred_mode,
+      preferred_modes: modes,
       distance_km: distanceKm,
       estimated_minutes: estimated,
       updated_at: new Date().toISOString()

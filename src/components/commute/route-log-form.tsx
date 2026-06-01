@@ -2,13 +2,14 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Star, X } from "lucide-react";
+import { AddressSearch, toggleMode, type AddressResult } from "@/components/commute/add-route-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api-client";
-import { crowdLevels } from "@/lib/constants";
-import type { CrowdLevel, RouteLog, SavedRoute } from "@/lib/types";
+import { crowdLevels, preferredModes } from "@/lib/constants";
+import type { CrowdLevel, PreferredMode, RouteLog, SavedRoute } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 export function RouteLogForm({
@@ -27,7 +28,14 @@ export function RouteLogForm({
   hideTrigger?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const [routeSource, setRouteSource] = useState<"saved" | "new">("saved");
   const [routeId, setRouteId] = useState(selectedRouteId ?? "");
+  const [newRouteName, setNewRouteName] = useState("");
+  const [newOriginName, setNewOriginName] = useState("");
+  const [newDestinationName, setNewDestinationName] = useState("");
+  const [newOrigin, setNewOrigin] = useState<AddressResult | null>(null);
+  const [newDestination, setNewDestination] = useState<AddressResult | null>(null);
+  const [modes, setModes] = useState<PreferredMode[]>(["Mixed"]);
   const [travelDate, setTravelDate] = useState(new Date().toISOString().slice(0, 10));
   const [minutes, setMinutes] = useState("");
   const [crowd, setCrowd] = useState<CrowdLevel>("moderate");
@@ -36,12 +44,22 @@ export function RouteLogForm({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const availableRoutes = useMemo(() => routes, [routes]);
+  const selectedRoute = availableRoutes.find((route) => route.id === routeId) ?? availableRoutes[0];
 
   useEffect(() => {
     if (openSignal === undefined) return;
-    setRouteId(selectedRouteId ?? routes[0]?.id ?? "");
+    const nextRouteId = selectedRouteId ?? routes[0]?.id ?? "";
+    setRouteSource(nextRouteId ? "saved" : "new");
+    setRouteId(nextRouteId);
+    const route = routes.find((item) => item.id === nextRouteId) ?? routes[0];
+    setModes(route?.preferred_modes?.length ? route.preferred_modes : route?.preferred_mode ? [route.preferred_mode] : ["Mixed"]);
     setOpen(true);
   }, [openSignal, routes, selectedRouteId]);
+
+  useEffect(() => {
+    if (!open || routeSource !== "saved") return;
+    setModes(selectedRoute?.preferred_modes?.length ? selectedRoute.preferred_modes : selectedRoute?.preferred_mode ? [selectedRoute.preferred_mode] : ["Mixed"]);
+  }, [open, routeSource, selectedRoute]);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -49,14 +67,35 @@ export function RouteLogForm({
     setError(null);
 
     try {
+      let activeRouteId = routeId || availableRoutes[0]?.id || "";
+      if (routeSource === "new") {
+        const routeResult = await apiFetch<{ route: SavedRoute }>("/api/routes", {
+          method: "POST",
+          body: JSON.stringify({
+            route_name: newRouteName,
+            origin_name: newOrigin?.label ?? newOriginName,
+            origin_lat: newOrigin?.latitude ?? null,
+            origin_lng: newOrigin?.longitude ?? null,
+            destination_name: newDestination?.label ?? newDestinationName,
+            destination_lat: newDestination?.latitude ?? null,
+            destination_lng: newDestination?.longitude ?? null,
+            preferred_mode: modes[0],
+            preferred_modes: modes,
+            is_favorite: false
+          })
+        });
+        activeRouteId = routeResult.route.id;
+      }
+
       const result = await apiFetch<{ log: RouteLog }>("/api/logs", {
         method: "POST",
         body: JSON.stringify({
-          route_id: routeId || availableRoutes[0]?.id,
+          route_id: activeRouteId,
           travel_date: travelDate,
           actual_duration_minutes: Number(minutes),
           crowd_level: crowd,
           rating,
+          preferred_modes: modes,
           notes
         })
       });
@@ -64,6 +103,11 @@ export function RouteLogForm({
       setOpen(false);
       setMinutes("");
       setNotes("");
+      setNewRouteName("");
+      setNewOriginName("");
+      setNewDestinationName("");
+      setNewOrigin(null);
+      setNewDestination(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to save log");
     } finally {
@@ -76,6 +120,7 @@ export function RouteLogForm({
       {hideTrigger ? null : (
         <Button onClick={() => {
           setRouteId(selectedRouteId ?? routes[0]?.id ?? "");
+          setRouteSource((selectedRouteId ?? routes[0]?.id) ? "saved" : "new");
           setOpen(true);
         }}>{buttonLabel}</Button>
       )}
@@ -93,15 +138,81 @@ export function RouteLogForm({
             </div>
             <div className="space-y-4">
               <div>
-                <Label>Saved route</Label>
-                <select
-                  className="mt-2 h-12 w-full rounded-2xl border border-white/[0.08] bg-surface-soft px-4 text-sm text-white outline-none"
-                  value={routeId || availableRoutes[0]?.id || ""}
-                  onChange={(event) => setRouteId(event.target.value)}
-                  required
-                >
-                  {availableRoutes.map((route) => <option key={route.id} value={route.id}>{route.route_name}</option>)}
-                </select>
+                <Label>Route</Label>
+                <div className="mt-2 grid grid-cols-2 gap-2 rounded-2xl bg-white/[0.035] p-1">
+                  {(["saved", "new"] as const).map((source) => (
+                    <button
+                      key={source}
+                      type="button"
+                      className={cn("rounded-xl px-3 py-2 text-sm font-bold text-white/45 transition", routeSource === source && "bg-white text-bg")}
+                      onClick={() => setRouteSource(source)}
+                    >
+                      {source === "saved" ? "Use saved" : "Create new"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {routeSource === "saved" ? (
+                <div>
+                  <Label>Saved route</Label>
+                  <select
+                    className="mt-2 h-12 w-full rounded-2xl border border-white/[0.08] bg-surface-soft px-4 text-sm text-white outline-none"
+                    value={routeId || availableRoutes[0]?.id || ""}
+                    onChange={(event) => setRouteId(event.target.value)}
+                    required={routeSource === "saved"}
+                  >
+                    {availableRoutes.map((route) => <option key={route.id} value={route.id}>{route.route_name}</option>)}
+                  </select>
+                  {!availableRoutes.length ? <p className="mt-2 text-xs text-white/42">No saved routes yet. Create one from this log.</p> : null}
+                </div>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="md:col-span-2">
+                    <Label>New route name</Label>
+                    <Input className="mt-2" value={newRouteName} onChange={(event) => setNewRouteName(event.target.value)} placeholder="Morning commute" required={routeSource === "new"} />
+                  </div>
+                  <AddressSearch
+                    label="Start point"
+                    value={newOriginName}
+                    selected={newOrigin}
+                    onValueChange={(value) => {
+                      setNewOriginName(value);
+                      setNewOrigin(null);
+                    }}
+                    onSelect={(result) => {
+                      setNewOrigin(result);
+                      setNewOriginName(result.name);
+                    }}
+                  />
+                  <AddressSearch
+                    label="End point"
+                    value={newDestinationName}
+                    selected={newDestination}
+                    onValueChange={(value) => {
+                      setNewDestinationName(value);
+                      setNewDestination(null);
+                    }}
+                    onSelect={(result) => {
+                      setNewDestination(result);
+                      setNewDestinationName(result.name);
+                    }}
+                  />
+                </div>
+              )}
+              <div>
+                <Label>Modes used</Label>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {preferredModes.map((item) => (
+                    <button
+                      key={item}
+                      type="button"
+                      onClick={() => setModes((current) => toggleMode(current, item as PreferredMode))}
+                      className={cn("rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-white/45", modes.includes(item as PreferredMode) && "border-[var(--blue-border)] bg-[var(--blue-soft)] text-blue")}
+                    >
+                      {item}
+                    </button>
+                  ))}
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -143,7 +254,7 @@ export function RouteLogForm({
                 <Textarea className="mt-2" placeholder="Rain, crowding, delays, transfer notes..." value={notes} onChange={(event) => setNotes(event.target.value)} />
               </div>
               {error ? <p className="rounded-2xl border border-[var(--red-border)] bg-[var(--red-soft)] p-3 text-sm text-red">{error}</p> : null}
-              <Button className="w-full" disabled={saving || !availableRoutes.length}>{saving ? "Saving..." : "Save Log"}</Button>
+              <Button className="w-full" disabled={saving || (routeSource === "saved" && !availableRoutes.length) || (routeSource === "new" && (!newOrigin || !newDestination || !newRouteName.trim()))}>{saving ? "Saving..." : "Save Log"}</Button>
             </div>
           </form>
         </div>

@@ -34,6 +34,22 @@ export function estimateMinutes(distanceKm: number, mode: PreferredMode) {
   return Math.max(5, Math.round((distanceKm / speedByModeKmH[mode]) * 60 + transferBuffer));
 }
 
+export function estimateMinutesForModes(distanceKm: number, modes: PreferredMode[]) {
+  if (!modes.length) return estimateMinutes(distanceKm, "Mixed");
+  const slowestEstimate = Math.max(...modes.map((mode) => estimateMinutes(distanceKm, mode)));
+  const transferBuffer = modes.length > 1 ? Math.min(14, modes.length * 4) : 0;
+  return slowestEstimate + transferBuffer;
+}
+
+export function primaryMode(modes: PreferredMode[]) {
+  return modes[0] ?? "Mixed";
+}
+
+export function formatModes(modes?: PreferredMode[] | null, fallback?: PreferredMode) {
+  const values = modes?.length ? modes : fallback ? [fallback] : [];
+  return values.length ? values.join(" + ") : "Mixed";
+}
+
 export function formatDateLabel(date: string) {
   const today = new Date();
   const target = new Date(`${date}T00:00:00`);

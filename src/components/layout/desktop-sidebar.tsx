@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { BarChart3, Database, Home, MapPinned, Navigation, PlusCircle, Route, Settings } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { apiFetch } from "@/lib/api-client";
+import { appName, tagline } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { AppUser } from "@/lib/types";
 
@@ -29,7 +30,7 @@ export function DesktopSidebar() {
       .catch(() => setUser(null));
   }, [pathname]);
 
-  const displayName = user?.full_name ?? "LakbayLoop";
+  const displayName = user?.full_name ?? appName;
   const workplace = user?.school_or_workplace ?? "Commute workspace";
   const initials = useMemo(() => {
     return displayName
@@ -48,8 +49,8 @@ export function DesktopSidebar() {
             <MapPinned className="size-5 text-white" />
           </span>
           <span>
-            <span className="block font-heading text-lg font-black text-white">LakbayLoop</span>
-            <span className="block text-xs text-white/35">Plan. Log. Learn.</span>
+            <span className="block font-heading text-lg font-black text-white">{appName}</span>
+            <span className="block text-xs text-white/35">{tagline}</span>
           </span>
         </Link>
       </div>

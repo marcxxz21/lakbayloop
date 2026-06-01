@@ -14,6 +14,7 @@ import { MetricCard } from "@/components/ui-custom/metric-card";
 import { SearchInput } from "@/components/ui-custom/search-input";
 import { CommuteTipCard } from "@/components/commute/commute-tip-card";
 import { apiFetch } from "@/lib/api-client";
+import { formatModes } from "@/lib/commute-calculations";
 import { dashboardActions } from "@/lib/mock-data";
 import type { DashboardData } from "@/lib/types";
 import { CalendarCheck, Database, Route, TrendingUp } from "lucide-react";
@@ -45,7 +46,7 @@ export function DashboardClient() {
     if (!search.trim()) return routes.slice(0, 4);
     const q = search.toLowerCase();
     return routes.filter((route) =>
-      [route.route_name, route.origin_name, route.destination_name, route.preferred_mode].some((value) => value.toLowerCase().includes(q))
+      [route.route_name, route.origin_name, route.destination_name, formatModes(route.preferred_modes, route.preferred_mode)].some((value) => value.toLowerCase().includes(q))
     );
   }, [data?.routes, search]);
 
@@ -73,7 +74,7 @@ export function DashboardClient() {
           <p className="text-xs font-bold uppercase tracking-[0.08em] text-white/38">Today&apos;s commute</p>
           <h2 className="mt-2 font-heading text-2xl font-black text-white">{data?.today.route?.route_name ?? "Add a route to begin"}</h2>
           <p className="mt-1 text-sm text-white/55">
-            {data?.today.route ? `${data.today.route.preferred_mode} · ${data.today.route.distance_km} km` : "Routes you add will appear here."}
+            {data?.today.route ? `${formatModes(data.today.route.preferred_modes, data.today.route.preferred_mode)} · ${data.today.route.distance_km} km` : "Routes you add will appear here."}
           </p>
         </div>
         <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-[var(--amber-border)] bg-[var(--amber-soft)] text-amber">

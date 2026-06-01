@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { calculateDistanceKm, estimateMinutes } from "@/lib/commute-calculations";
+import { calculateDistanceKm, estimateMinutesForModes, primaryMode } from "@/lib/commute-calculations";
 import { getRequestSessionId } from "@/lib/session";
 import { getSupabaseDataClient } from "@/lib/supabase/data";
 import type { PreferredMode } from "@/lib/types";
@@ -13,7 +13,8 @@ const routeSchema = z.object({
   destination_name: z.string().min(1),
   destination_lat: z.coerce.number().optional().nullable(),
   destination_lng: z.coerce.number().optional().nullable(),
-  preferred_mode: z.enum(["Walking", "Jeepney", "Bus", "Train", "Bike", "Car", "Mixed"]),
+  preferred_mode: z.enum(["Walking", "Jeepney", "Bus", "Train", "Bike", "Car", "Mixed"]).optional(),
+  preferred_modes: z.array(z.enum(["Walking", "Jeepney", "Bus", "Train", "Bike", "Car", "Mixed"])).min(1).optional(),
   is_favorite: z.boolean().default(false)
 });
 
@@ -53,13 +54,16 @@ export async function POST(request: Request) {
   }
 
   const distanceKm = calculateDistanceKm(origin.latitude, origin.longitude, destination.latitude, destination.longitude);
-  const estimated = estimateMinutes(distanceKm, body.preferred_mode as PreferredMode);
+  const modes = (body.preferred_modes?.length ? body.preferred_modes : [body.preferred_mode ?? "Mixed"]) as PreferredMode[];
+  const estimated = estimateMinutesForModes(distanceKm, modes);
 
   const { data, error } = await supabase
     .from("ll_saved_routes")
     .insert({
       ...body,
       session_id: sessionId,
+      preferred_mode: primaryMode(modes),
+      preferred_modes: modes,
       origin_lat: origin.latitude,
       origin_lng: origin.longitude,
       destination_lat: destination.latitude,
@@ -93,7 +97,7 @@ async function resolveCoordinates(name: string, latitude?: number | null, longit
     const response = await fetch(url, {
       headers: {
         "Accept-Language": "en",
-        "User-Agent": "LakbayLoop/0.1 route-create"
+        "User-Agent": "Kalakbay/0.1 route-create"
       }
     });
     if (!response.ok) return null;

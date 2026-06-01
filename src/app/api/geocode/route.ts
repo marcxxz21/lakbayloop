@@ -28,7 +28,7 @@ export async function GET(request: Request) {
   const response = await fetch(url, {
     headers: {
       "Accept-Language": "en",
-      "User-Agent": "LakbayLoop/0.1 route-search"
+      "User-Agent": "Kalakbay/0.1 route-search"
     },
     next: { revalidate: 86400 }
   });

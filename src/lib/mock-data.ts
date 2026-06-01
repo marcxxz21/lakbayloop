@@ -15,17 +15,17 @@ import {
 export const mockUser = {
   name: "Josie",
   initials: "JD",
-  schoolOrWorkplace: "UP Manila"
+  schoolOrWorkplace: "Daily commute"
 };
 
 export const mockRoutes = [
   {
     id: "1",
-    routeName: "Home -> UP Manila",
+    routeName: "Home -> City center",
     originName: "Home",
     originLat: 14.676,
     originLng: 121.043,
-    destinationName: "UP Manila",
+    destinationName: "City center",
     destinationLat: 14.578,
     destinationLng: 120.985,
     mode: "Walking",
@@ -38,8 +38,8 @@ export const mockRoutes = [
   },
   {
     id: "2",
-    routeName: "Campus -> Work",
-    originName: "Campus",
+    routeName: "Market -> Work",
+    originName: "Market",
     originLat: 14.583,
     originLng: 120.986,
     destinationName: "Work",
@@ -73,10 +73,10 @@ export const mockRoutes = [
 ];
 
 export const routeLogs = [
-  { id: "l1", route: "Home -> UP Manila", date: "Today", duration: 31, crowd: "moderate", rating: 4, notes: "Light rain near Taft." },
-  { id: "l2", route: "Campus -> Work", date: "Yesterday", duration: 46, crowd: "crowded", rating: 3, notes: "Long queue at the terminal." },
+  { id: "l1", route: "Home -> City center", date: "Today", duration: 31, crowd: "moderate", rating: 4, notes: "Light rain near the main road." },
+  { id: "l2", route: "Market -> Work", date: "Yesterday", duration: 46, crowd: "crowded", rating: 3, notes: "Long queue at the terminal." },
   { id: "l3", route: "Home -> MRT North", date: "Friday", duration: 35, crowd: "light", rating: 5, notes: "Fast transfer." },
-  { id: "l4", route: "Home -> UP Manila", date: "Thursday", duration: 29, crowd: "moderate", rating: 4, notes: "Clear skies." }
+  { id: "l4", route: "Home -> City center", date: "Thursday", duration: 29, crowd: "moderate", rating: 4, notes: "Clear skies." }
 ];
 
 export const insightMetrics = [
@@ -146,7 +146,7 @@ export const dashboardActions = [
 ];
 
 export const commuteContext = {
-  route: "Home -> UP Manila",
+  route: "Home -> City center",
   via: "Via Commonwealth Ave · 3.2 km",
   estimated: "28 min",
   rainChance: "40%",

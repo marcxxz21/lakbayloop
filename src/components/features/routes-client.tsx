@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { SearchInput } from "@/components/ui-custom/search-input";
 import { StatusBadge } from "@/components/ui-custom/status-badge";
 import { apiFetch } from "@/lib/api-client";
+import { formatModes } from "@/lib/commute-calculations";
 import { cn } from "@/lib/utils";
 import type { PreferredMode, SavedRoute } from "@/lib/types";
 
@@ -35,7 +36,7 @@ export function RoutesPageClient() {
   const visibleRoutes = routes.filter((route) => {
     if (routeFilter === "All") return true;
     if (routeFilter === "Favorites") return route.is_favorite;
-    return route.preferred_mode === routeFilter;
+    return (route.preferred_modes?.length ? route.preferred_modes : [route.preferred_mode]).includes(routeFilter);
   });
 
   async function loadRoutes(search = query) {
@@ -161,7 +162,7 @@ export function RoutesPageClient() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-2xl bg-white/[0.035] p-3">
                   <p className="text-xs text-white/35">Mode</p>
-                  <p className="mt-1 font-heading text-base font-black text-white">{selected.preferred_mode}</p>
+                  <p className="mt-1 font-heading text-base font-black text-white">{formatModes(selected.preferred_modes, selected.preferred_mode)}</p>
                 </div>
                 <div className="rounded-2xl bg-white/[0.035] p-3">
                   <p className="flex items-center gap-2 text-xs text-white/35"><Clock className="size-4 text-amber" /> Estimated</p>
@@ -292,7 +293,7 @@ export function RoutesPageClient() {
                 <span className="block text-xs text-white/38">Destination</span>
                 <b className="mt-1 block leading-5 text-white">{selected.destination_name}</b>
               </div>
-              <div className="flex justify-between gap-4 rounded-2xl bg-white/[0.035] p-3"><span>Preferred mode</span><b className="text-white">{selected.preferred_mode}</b></div>
+              <div className="flex justify-between gap-4 rounded-2xl bg-white/[0.035] p-3"><span>Preferred modes</span><b className="text-white">{formatModes(selected.preferred_modes, selected.preferred_mode)}</b></div>
               <div className="flex justify-between gap-4 rounded-2xl bg-white/[0.035] p-3"><span>Estimated</span><b className="text-white">{selected.estimated_minutes} min</b></div>
             </div>
             <div className="mt-5">
@@ -327,7 +328,7 @@ export function RoutesPageClient() {
               </div>
               <div className="rounded-2xl bg-white/[0.035] p-4">
                 <p className="text-xs text-white/35">Mode</p>
-                <p className="mt-1 font-heading text-lg font-black text-white">{selected.preferred_mode}</p>
+                <p className="mt-1 font-heading text-lg font-black text-white">{formatModes(selected.preferred_modes, selected.preferred_mode)}</p>
               </div>
               <div className="rounded-2xl bg-white/[0.035] p-4">
                 <p className="flex items-center gap-2 text-xs text-white/35"><Clock className="size-4 text-amber" /> Estimated</p>

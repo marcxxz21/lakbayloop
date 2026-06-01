@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft, MapPinned } from "lucide-react";
 import { SignupFormClient } from "@/components/features/auth-form-client";
+import { appName, tagline } from "@/lib/constants";
 
 export default function SignupPage() {
   return (
@@ -15,11 +16,11 @@ export default function SignupPage() {
             <span className="flex size-11 items-center justify-center rounded-[16px] bg-blue">
               <MapPinned className="size-5" />
             </span>
-            <span className="font-heading text-2xl font-black">LakbayLoop</span>
+            <span className="font-heading text-2xl font-black">{appName}</span>
           </div>
           <h1 className="mt-8 max-w-lg font-heading text-4xl font-black leading-tight lg:text-5xl lg:leading-none">Set up your commute profile.</h1>
           <p className="mt-5 max-w-md leading-7 text-white/58">
-            Start with your email, school or workplace, and preferred commute modes. LakbayLoop stores profiles without sending confirmation emails.
+            {tagline} Start with your email, a common destination or area, and the commute modes you use most.
           </p>
         </section>
         <section className="rounded-[28px] border border-white/[0.08] bg-surface p-5 shadow-panel sm:p-7">

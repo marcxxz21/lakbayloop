@@ -10,7 +10,7 @@ export async function GET(request: Request) {
 
   const { data, error } = await supabase
     .from("ll_route_logs")
-    .select("*, ll_saved_routes(route_name, preferred_mode)")
+    .select("*, ll_saved_routes(route_name, preferred_mode, preferred_modes)")
     .eq("session_id", sessionId)
     .order("travel_date", { ascending: false });
 

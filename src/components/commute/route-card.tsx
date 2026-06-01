@@ -1,6 +1,7 @@
 import { Bike, Bus, Car, Clock, Footprints, Heart, MapPin, TrainFront } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui-custom/status-badge";
+import { formatModes } from "@/lib/commute-calculations";
 import { cn } from "@/lib/utils";
 import type { PreferredMode, SavedRoute } from "@/lib/types";
 
@@ -65,7 +66,7 @@ export function RouteCard({
             <span className="truncate">{route.origin_name} &gt; {route.destination_name}</span>
           </p>
           <p className="mt-1 truncate text-xs text-white/32">
-            {route.preferred_mode} · {route.distance_km} km · last log {route.latest_log ?? "No logs yet"}
+            {formatModes(route.preferred_modes, route.preferred_mode)} · {route.distance_km} km · last log {route.latest_log ?? "No logs yet"}
           </p>
         </div>
         <StatusBadge status={condition} />

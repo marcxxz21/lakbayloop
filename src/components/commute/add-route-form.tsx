@@ -17,7 +17,7 @@ type FormState = {
   is_favorite: boolean;
 };
 
-type AddressResult = {
+export type AddressResult = {
   id: string;
   label: string;
   name: string;
@@ -35,7 +35,7 @@ const defaultState: FormState = {
 
 export function AddRouteForm({ onSaved }: { onSaved?: (route: SavedRoute) => void }) {
   const [open, setOpen] = useState(false);
-  const [mode, setMode] = useState<PreferredMode>("Walking");
+  const [modes, setModes] = useState<PreferredMode[]>(["Walking"]);
   const [form, setForm] = useState<FormState>(defaultState);
   const [origin, setOrigin] = useState<AddressResult | null>(null);
   const [destination, setDestination] = useState<AddressResult | null>(null);
@@ -56,7 +56,8 @@ export function AddRouteForm({ onSaved }: { onSaved?: (route: SavedRoute) => voi
         destination_name: destination?.label ?? form.destination_name,
         destination_lat: destination?.latitude ?? null,
         destination_lng: destination?.longitude ?? null,
-        preferred_mode: mode
+        preferred_mode: modes[0],
+        preferred_modes: modes
       };
       const result = await apiFetch<{ route: SavedRoute }>("/api/routes", {
         method: "POST",
@@ -66,7 +67,7 @@ export function AddRouteForm({ onSaved }: { onSaved?: (route: SavedRoute) => voi
       setForm(defaultState);
       setOrigin(null);
       setDestination(null);
-      setMode("Walking");
+      setModes(["Walking"]);
       setOpen(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to save route");
@@ -112,7 +113,7 @@ export function AddRouteForm({ onSaved }: { onSaved?: (route: SavedRoute) => voi
                   required
                   value={form.route_name}
                   onChange={(event) => setForm((current) => ({ ...current, route_name: event.target.value }))}
-                  placeholder="Home to campus"
+                  placeholder="Home to work"
                 />
               </div>
 
@@ -155,14 +156,14 @@ export function AddRouteForm({ onSaved }: { onSaved?: (route: SavedRoute) => voi
               </div>
 
               <div className="md:col-span-2">
-                <Label>Preferred mode</Label>
+                <Label>Preferred modes</Label>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {preferredModes.map((item) => (
                     <button
                       key={item}
                       type="button"
-                      onClick={() => setMode(item as PreferredMode)}
-                      className={cn("rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-white/45", mode === item && "border-[var(--blue-border)] bg-[var(--blue-soft)] text-blue")}
+                      onClick={() => setModes((current) => toggleMode(current, item as PreferredMode))}
+                      className={cn("rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-white/45", modes.includes(item as PreferredMode) && "border-[var(--blue-border)] bg-[var(--blue-soft)] text-blue")}
                     >
                       {item}
                     </button>
@@ -191,7 +192,7 @@ export function AddRouteForm({ onSaved }: { onSaved?: (route: SavedRoute) => voi
   );
 }
 
-function AddressSearch({
+export function AddressSearch({
   label,
   value,
   selected,
@@ -264,4 +265,11 @@ function AddressSearch({
       ) : null}
     </div>
   );
+}
+
+export function toggleMode(current: PreferredMode[], mode: PreferredMode) {
+  if (current.includes(mode)) {
+    return current.length === 1 ? current : current.filter((item) => item !== mode);
+  }
+  return [...current, mode];
 }
